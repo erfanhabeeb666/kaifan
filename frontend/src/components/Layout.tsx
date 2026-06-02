@@ -28,6 +28,7 @@ import {
   Logout as LogoutIcon,
   Restaurant as RestaurantIcon,
   ContactPhone as ContactPhoneIcon,
+  ShoppingBag as OrdersIcon,
 } from '@mui/icons-material';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
@@ -41,6 +42,7 @@ const navItems = [
   { path: '/queue', label: 'Queue', icon: <QueueIcon /> },
   { path: '/employees', label: 'Employees', icon: <PeopleIcon /> },
   { path: '/customers', label: 'Customers', icon: <ContactPhoneIcon /> },
+  { path: '/orders', label: 'PetPooja Orders', icon: <OrdersIcon /> },
   { path: '/audit', label: 'Audit Logs', icon: <SecurityIcon />, adminOnly: true },
 ];
 

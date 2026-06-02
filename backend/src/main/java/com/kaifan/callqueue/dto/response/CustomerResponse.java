@@ -15,6 +15,7 @@ public class CustomerResponse {
     private Long id;
     private String phoneNumber;
     private String name;
+    private String deliveryAddress;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

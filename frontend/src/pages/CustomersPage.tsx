@@ -251,6 +251,7 @@ export default function CustomersPage() {
                           <TableRow>
                             <TableCell>Phone Number</TableCell>
                             <TableCell>Customer Name</TableCell>
+                            <TableCell>Delivery Address</TableCell>
                             <TableCell>Date Registered</TableCell>
                             <TableCell align="right">Actions</TableCell>
                           </TableRow>
@@ -275,6 +276,11 @@ export default function CustomersPage() {
                                     Not provided
                                   </Typography>
                                 )}
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2" noWrap sx={{ maxWidth: 200 }}>
+                                  {customer.deliveryAddress || <Typography variant="body2" component="span" color="text.secondary" sx={{ fontStyle: 'italic' }}>Not provided</Typography>}
+                                </Typography>
                               </TableCell>
                               <TableCell>{dayjs(customer.createdAt).format('YYYY-MM-DD HH:mm')}</TableCell>
                               <TableCell align="right">
@@ -316,7 +322,7 @@ export default function CustomersPage() {
                           ))}
                           {customersList.length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
+                              <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
                                 <Typography color="text.secondary">No customers found</Typography>
                               </TableCell>
                             </TableRow>

@@ -19,6 +19,7 @@ export const useWebSocket = () => {
       // Auto-refresh lists on any telemetry event
       queryClient.invalidateQueries({ queryKey: ['callHistory'] });
       queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['petpoojaOrders'] });
 
       switch (event.type) {
         case 'NEW_CALL':

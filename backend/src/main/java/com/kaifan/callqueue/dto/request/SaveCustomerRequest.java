@@ -16,4 +16,6 @@ public class SaveCustomerRequest {
     private String phoneNumber;
 
     private String name;
+
+    private String deliveryAddress;
 }

@@ -17,6 +17,8 @@ import type {
   CustomerResponse,
   SaveCustomerRequest,
   UpdateCustomerNameRequest,
+  PetpoojaOrderResponse,
+  CustomerDetailResponse,
 } from '../types';
 
 // Auth
@@ -103,3 +105,16 @@ export const updateCustomerName = (id: number, data: UpdateCustomerNameRequest) 
 
 export const deleteCustomer = (id: number) =>
   api.delete<ApiResponse<void>>(`/api/customers/${id}`);
+
+// PetPooja
+export const getPetpoojaOrders = (params?: { page?: number; size?: number }) =>
+  api.get<ApiResponse<PageResponse<PetpoojaOrderResponse>>>('/api/petpooja/orders', { params });
+
+export const getOrdersByPhone = (phone: string) =>
+  api.get<ApiResponse<PetpoojaOrderResponse[]>>('/api/petpooja/orders/customer', { params: { phone } });
+
+export const syncPetpoojaOrders = (phone: string) =>
+  api.post<ApiResponse<PetpoojaOrderResponse[]>>('/api/petpooja/orders/sync', null, { params: { phone } });
+
+export const getCustomerDetail = (phone: string) =>
+  api.get<ApiResponse<CustomerDetailResponse>>('/api/petpooja/customer-detail', { params: { phone } });

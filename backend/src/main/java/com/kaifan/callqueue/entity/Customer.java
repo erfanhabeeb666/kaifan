@@ -26,6 +26,9 @@ public class Customer {
     @Column(length = 100)
     private String name;
 
+    @Column(name = "delivery_address", length = 500)
+    private String deliveryAddress;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

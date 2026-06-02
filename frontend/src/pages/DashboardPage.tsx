@@ -23,6 +23,8 @@ import {
   Button,
   TextField,
   IconButton,
+  Tooltip,
+  Pagination,
 } from '@mui/material';
 import {
   Phone as PhoneIcon,
@@ -34,13 +36,18 @@ import {
   AccessTime as AccessTimeIcon,
   Person as PersonIcon,
   Edit as EditIcon,
+  Restaurant as RestaurantIcon,
+  Visibility as ViewIcon,
+  LocalShipping as DeliveryIcon,
+  ShoppingBag as OrdersIcon,
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDashboard, createCustomer } from '../api/endpoints';
+import { getDashboard, createCustomer, getPetpoojaOrders } from '../api/endpoints';
 import { useDashboardStore } from '../stores/dashboardStore';
+import CallPopup from '../components/CallPopup';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import type { EmployeeStatus } from '../types';
+import type { EmployeeStatus, CallLogResponse } from '../types';
 import toast from 'react-hot-toast';
 
 dayjs.extend(relativeTime);
@@ -127,6 +134,9 @@ export default function DashboardPage() {
   const [openNameDialog, setOpenNameDialog] = useState(false);
   const [selectedPhone, setSelectedPhone] = useState('');
   const [customerNameInput, setCustomerNameInput] = useState('');
+  const [callPopupOpen, setCallPopupOpen] = useState(false);
+  const [callPopupCall, setCallPopupCall] = useState<CallLogResponse | null>(null);
+  const [ordersPage, setOrdersPage] = useState(1);
 
   const saveCustomerMutation = useMutation({
     mutationFn: createCustomer,
@@ -163,11 +173,29 @@ export default function DashboardPage() {
     refetchInterval: 10000,
   });
 
+  // Fetch PetPooja orders for the dashboard
+  const { data: petpoojaOrdersData } = useQuery({
+    queryKey: ['petpoojaOrders', ordersPage],
+    queryFn: async () => {
+      const res = await getPetpoojaOrders({ page: ordersPage - 1, size: 5 });
+      return res.data.data;
+    },
+    staleTime: 30000,
+  });
+
   useEffect(() => {
     if (data) {
       setDashboard(data);
     }
   }, [data, setDashboard]);
+
+  // Auto-open call popup when a call gets connected
+  useEffect(() => {
+    if (dashboard?.activeCall && dashboard.activeCall.status === 'CONNECTED') {
+      setCallPopupCall(dashboard.activeCall);
+      setCallPopupOpen(true);
+    }
+  }, [dashboard?.activeCall?.callSid, dashboard?.activeCall?.status]);
 
   const d = dashboard;
 
@@ -187,6 +215,8 @@ export default function DashboardPage() {
   }
 
   const analytics = d?.analytics;
+  const ppOrders = petpoojaOrdersData?.content || [];
+  const ppTotalPages = petpoojaOrdersData?.totalPages || 1;
 
   return (
     <Box className="animate-fade-in">
@@ -322,7 +352,7 @@ export default function DashboardPage() {
                       Add customer name
                     </Typography>
                   )}
-                  <Box sx={{ mt: 1 }}>
+                  <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Chip
                       label={d.activeCall.status}
                       size="small"
@@ -332,6 +362,20 @@ export default function DashboardPage() {
                         fontWeight: 700,
                       }}
                     />
+                    <Tooltip title="View customer details & orders">
+                      <Chip
+                        icon={<ViewIcon sx={{ fontSize: 16 }} />}
+                        label="View Details"
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        onClick={() => {
+                          setCallPopupCall(d?.activeCall || null);
+                          setCallPopupOpen(true);
+                        }}
+                        sx={{ cursor: 'pointer', fontWeight: 600 }}
+                      />
+                    </Tooltip>
                   </Box>
                   {d.activeCall.employeeName && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -449,6 +493,151 @@ export default function DashboardPage() {
           </Card>
         </Grid>
 
+        {/* PetPooja Recent Orders */}
+        <Grid item xs={12}>
+          <Card>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <OrdersIcon color="primary" /> PetPooja Orders
+                </Typography>
+                <Chip
+                  label={`${petpoojaOrdersData?.totalElements ?? 0} total`}
+                  size="small"
+                  variant="outlined"
+                  color="secondary"
+                  sx={{ fontWeight: 600 }}
+                />
+              </Box>
+              {ppOrders.length > 0 ? (
+                <>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Order ID</TableCell>
+                          <TableCell>Customer</TableCell>
+                          <TableCell>Items</TableCell>
+                          <TableCell>Type</TableCell>
+                          <TableCell>Status</TableCell>
+                          <TableCell align="right">Amount</TableCell>
+                          <TableCell>Date</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {ppOrders.map((order) => (
+                          <TableRow key={order.id} hover>
+                            <TableCell>
+                              <Typography variant="body2" fontWeight={600} sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                                #{order.petpoojaOrderId}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" fontWeight={600}>
+                                {order.customerName || order.customerPhone}
+                              </Typography>
+                              {order.customerName && (
+                                <Typography variant="caption" color="text.secondary">
+                                  {order.customerPhone}
+                                </Typography>
+                              )}
+                            </TableCell>
+                            <TableCell sx={{ maxWidth: 180 }}>
+                              {order.items && order.items.length > 0 ? (
+                                <Box>
+                                  {order.items.slice(0, 2).map((item, idx) => (
+                                    <Typography key={idx} variant="caption" display="block" noWrap>
+                                      {item.quantity}× {item.name}
+                                    </Typography>
+                                  ))}
+                                  {order.items.length > 2 && (
+                                    <Typography variant="caption" color="text.secondary">
+                                      +{order.items.length - 2} more
+                                    </Typography>
+                                  )}
+                                </Box>
+                              ) : (
+                                <Typography variant="caption" color="text.secondary">—</Typography>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {order.orderType && (
+                                <Chip
+                                  icon={order.orderType.toLowerCase().includes('delivery')
+                                    ? <DeliveryIcon sx={{ fontSize: 14 }} />
+                                    : <RestaurantIcon sx={{ fontSize: 14 }} />}
+                                  label={order.orderType}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ fontSize: '0.7rem' }}
+                                />
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={order.orderStatus || '—'}
+                                size="small"
+                                sx={{
+                                  fontWeight: 700,
+                                  fontSize: '0.7rem',
+                                  background: order.orderStatus === 'Delivered' || order.orderStatus === 'Completed'
+                                    ? alpha('#10B981', 0.12)
+                                    : alpha('#64748B', 0.1),
+                                  color: order.orderStatus === 'Delivered' || order.orderStatus === 'Completed'
+                                    ? '#10B981'
+                                    : '#64748B',
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography variant="body2" fontWeight={700}>
+                                ₹{order.totalAmount?.toFixed(0) ?? '0'}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="caption" color="text.secondary">
+                                {order.orderPlacedAt
+                                  ? dayjs(order.orderPlacedAt).format('MMM D, HH:mm')
+                                  : '—'}
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  {ppTotalPages > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', pt: 2 }}>
+                      <Pagination
+                        count={ppTotalPages}
+                        page={ordersPage}
+                        onChange={(_, val) => setOrdersPage(val)}
+                        color="primary"
+                        size="small"
+                      />
+                    </Box>
+                  )}
+                </>
+              ) : (
+                <Box
+                  sx={{
+                    p: 4,
+                    textAlign: 'center',
+                    borderRadius: 3,
+                    background: alpha(theme.palette.text.secondary, 0.03),
+                  }}
+                >
+                  <OrdersIcon sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.3, mb: 1 }} />
+                  <Typography color="text.secondary">No PetPooja orders yet</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Orders from PetPooja will appear here once synced
+                  </Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
         {/* Employees */}
         <Grid item xs={12}>
           <Card>
@@ -546,6 +735,13 @@ export default function DashboardPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Call Popup with Customer Details & Order History */}
+      <CallPopup
+        open={callPopupOpen}
+        onClose={() => setCallPopupOpen(false)}
+        activeCall={callPopupCall}
+      />
     </Box>
   );
 }

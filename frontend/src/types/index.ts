@@ -118,6 +118,7 @@ export interface CustomerResponse {
   id: number;
   phoneNumber: string;
   name: string | null;
+  deliveryAddress: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -125,8 +126,46 @@ export interface CustomerResponse {
 export interface SaveCustomerRequest {
   phoneNumber: string;
   name?: string;
+  deliveryAddress?: string;
 }
 
 export interface UpdateCustomerNameRequest {
   name: string;
+}
+
+// PetPooja types
+export interface PetpoojaOrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+  variant: string | null;
+  addons: string[] | null;
+}
+
+export interface PetpoojaOrderResponse {
+  id: number;
+  petpoojaOrderId: string;
+  customerPhone: string;
+  customerName: string | null;
+  deliveryAddress: string | null;
+  orderStatus: string | null;
+  orderType: string | null;
+  items: PetpoojaOrderItem[];
+  totalAmount: number | null;
+  discountAmount: number | null;
+  taxAmount: number | null;
+  deliveryCharge: number | null;
+  paymentMode: string | null;
+  orderPlacedAt: string | null;
+}
+
+export interface CustomerDetailResponse {
+  customerId: number | null;
+  phoneNumber: string;
+  name: string | null;
+  deliveryAddress: string | null;
+  customerSince: string | null;
+  totalOrders: number;
+  totalSpent: number;
+  recentOrders: PetpoojaOrderResponse[];
 }

@@ -38,11 +38,15 @@ public class CustomerServiceImpl implements CustomerService {
                     if (request.getName() != null) {
                         existing.setName(request.getName());
                     }
+                    if (request.getDeliveryAddress() != null) {
+                        existing.setDeliveryAddress(request.getDeliveryAddress());
+                    }
                     return existing;
                 })
                 .orElseGet(() -> Customer.builder()
                         .phoneNumber(request.getPhoneNumber())
                         .name(request.getName())
+                        .deliveryAddress(request.getDeliveryAddress())
                         .build());
 
         customer = customerRepository.save(customer);

@@ -43,6 +43,14 @@ app:
     account-sid: ${EXOTEL_ACCOUNT_SID:kaifankuzhimandhi1}
     caller-id: ${EXOTEL_CALLER_ID:+911234567890}
 
+  petpooja:
+    enabled: ${PETPOOJA_ENABLED:false}
+    base-url: ${PETPOOJA_BASE_URL:https://api.petpooja.com}
+    app-key: ${PETPOOJA_APP_KEY:}
+    app-secret: ${PETPOOJA_APP_SECRET:}
+    access-token: ${PETPOOJA_ACCESS_TOKEN:}
+    restaurant-id: ${PETPOOJA_RESTAURANT_ID:}
+
 springdoc:
   api-docs:
     path: /api-docs

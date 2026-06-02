@@ -14,6 +14,7 @@ import QueuePage from './pages/QueuePage';
 import EmployeesPage from './pages/EmployeesPage';
 import AuditPage from './pages/AuditPage';
 import CustomersPage from './pages/CustomersPage';
+import PetpoojaOrdersPage from './pages/PetpoojaOrdersPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -85,6 +86,10 @@ export default function App() {
               <Route
                 path="customers"
                 element={<CustomersPage />}
+              />
+              <Route
+                path="orders"
+                element={<PetpoojaOrdersPage />}
               />
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
