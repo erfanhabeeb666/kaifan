@@ -1,0 +1,563 @@
+Project: Restaurant Call Queue Management System (Exotel Trial Number Demo)
+Overview
+
+Build a production-quality restaurant call queue management platform for a Mandhi restaurant.
+
+This system will use an Exotel Trial Voice Number for demonstration purposes.
+
+The objective is to show how incoming customer calls are managed when only one employee is available to answer calls.
+
+This is NOT an AI project.
+
+Do NOT implement:
+
+AI agents
+Speech-to-text
+Text-to-speech
+LLM integrations
+Order extraction
+Chatbots
+
+Focus entirely on telephony event handling, queue management, live monitoring, analytics, and call tracking.
+
+Business Problem
+
+The restaurant currently receives customer orders via phone calls.
+
+"The system must support multiple employees. Incoming calls should be automatically assigned to the longest-idle AVAILABLE employee. If no employees are AVAILABLE, callers are placed into a FIFO queue. When an employee becomes AVAILABLE or completes a call, the oldest waiting caller should be assigned automatically."
+
+When multiple customers call simultaneously:
+
+One customer should be connected.
+Additional customers should be placed in a queue.
+Queue positions should be tracked.
+Call history should be stored.
+Management should have visibility into call activity.
+
+The system must later support real Exotel production deployment using the restaurant's actual phone number.
+
+For this demo, use only an Exotel Trial Voice Number.
+
+Technology Stack
+
+Backend:
+
+Java 21
+Spring Boot 3.x
+Spring Security
+Spring Data JPA
+Hibernate
+JWT Authentication
+Flyway
+Lombok
+MapStruct
+MySQL
+WebSocket (STOMP)
+
+Frontend:
+
+React
+TypeScript
+Material UI
+React Query
+Axios
+Zustand
+
+Infrastructure:
+
+Docker
+Docker Compose
+Nginx
+
+Telephony:
+
+Exotel Trial Number
+Exotel Voice Flow
+Exotel Webhooks
+Architecture
+
+Use Clean Architecture.
+
+controller
+service
+repository
+entity
+dto
+mapper
+config
+security
+websocket
+telephony
+analytics
+audit
+
+Requirements:
+
+DTOs only
+Never expose entities directly
+Global exception handling
+Validation
+Service interfaces
+Transaction management
+Telephony Abstraction
+
+Create an abstraction layer.
+
+public interface TelephonyProvider {
+
+    void handleIncomingCall(String callSid, String phoneNumber);
+
+    void handleCallConnected(String callSid);
+
+    void handleCallCompleted(String callSid);
+
+    void handleCallMissed(String callSid);
+}
+
+Implementation:
+
+ExotelTelephonyProvider
+
+Future implementations:
+
+TwilioTelephonyProvider
+SimulatorTelephonyProvider
+
+Business logic must never depend directly on Exotel.
+
+User Roles
+Admin
+
+Can:
+
+View dashboard
+View all calls
+View queue
+View analytics
+View employees
+Manage employee status
+View audit logs
+Employee
+
+Can:
+
+Set status
+View active call
+View queue
+View personal statistics
+Employee Entity
+Employee
+{
+    Long id;
+
+    String name;
+
+    String phoneNumber;
+
+    EmployeeStatus status;
+
+    Boolean active;
+
+    LocalDateTime createdAt;
+}
+
+Statuses:
+
+AVAILABLE
+BUSY
+OFFLINE
+CallLog Entity
+CallLog
+{
+    Long id;
+
+    String callSid;
+
+    String callerNumber;
+
+    CallStatus status;
+
+    LocalDateTime startTime;
+
+    LocalDateTime answerTime;
+
+    LocalDateTime endTime;
+
+    Integer durationSeconds;
+
+    Boolean missed;
+
+    LocalDateTime createdAt;
+}
+
+Statuses:
+
+INCOMING
+QUEUED
+CONNECTED
+COMPLETED
+MISSED
+ABANDONED
+QueueEntry Entity
+QueueEntry
+{
+    Long id;
+
+    String callerNumber;
+
+    Integer queuePosition;
+
+    LocalDateTime queuedAt;
+
+    LocalDateTime connectedAt;
+
+    Integer waitTimeSeconds;
+
+    QueueStatus status;
+}
+
+Statuses:
+
+WAITING
+CONNECTED
+COMPLETED
+ABANDONED
+AuditLog Entity
+AuditLog
+{
+    Long id;
+
+    String username;
+
+    String action;
+
+    String details;
+
+    LocalDateTime timestamp;
+}
+Exotel Integration
+
+Create webhook endpoints.
+
+Incoming Call
+POST /api/exotel/incoming
+
+Exotel sends:
+
+{
+  "CallSid":"CALL123",
+  "From":"+919876543210"
+}
+
+System must:
+
+Create CallLog
+Check employee availability
+Connect call if employee available
+Queue caller if employee busy
+Broadcast event via WebSocket
+Call Connected
+POST /api/exotel/connected
+
+System must:
+
+Update status
+Record answer time
+Update dashboard
+Call Completed
+POST /api/exotel/completed
+
+System must:
+
+Update end time
+Calculate duration
+Complete current call
+Automatically connect next queued caller
+Broadcast update
+Missed Call
+POST /api/exotel/missed
+
+System must:
+
+Mark missed
+Store call details
+Update analytics
+Queue Engine
+
+"The system must support multiple employees. Incoming calls should be automatically assigned to the longest-idle AVAILABLE employee. If no employees are AVAILABLE, callers are placed into a FIFO queue. When an employee becomes AVAILABLE or completes a call, the oldest waiting caller should be assigned automatically."
+
+Flow:
+
+Incoming Call
+      |
+Employee Available?
+      |
+     YES
+      |
+Connect Immediately
+
+Else:
+
+Incoming Call
+      |
+Employee Busy
+      |
+Add To Queue
+
+Queue type:
+
+FIFO
+
+When current call completes:
+
+Complete Call
+      |
+Find Oldest Waiting Queue Entry
+      |
+Connect Automatically
+Live Dashboard
+
+Use WebSockets.
+
+No refresh.
+
+Sections:
+
+Active Call
+
+Display:
+
+Caller Number
+
+Connected Since
+
+Duration
+
+Call Status
+Queue
+
+Display:
+
+Position
+
+Phone Number
+
+Wait Time
+Employee Status
+
+Display:
+
+AVAILABLE
+BUSY
+OFFLINE
+
+Allow status changes.
+
+Dashboard Analytics
+
+Cards:
+
+Calls Today
+
+Calls This Week
+
+Calls This Month
+
+Answered Calls
+
+Missed Calls
+
+Average Wait Time
+
+Longest Wait Time
+
+Average Call Duration
+
+Current Queue Length
+Call History Page
+
+Display:
+
+Phone Number
+
+Call SID
+
+Status
+
+Start Time
+
+End Time
+
+Duration
+
+Filters:
+
+Phone Number
+
+Status
+
+Date Range
+
+Pagination required.
+
+Queue Management Page
+
+Display:
+
+Current Queue
+
+Queue Position
+
+Wait Time
+
+Queue Status
+
+Allow admin to:
+
+Remove Caller
+
+Mark Abandoned
+
+View Queue Details
+Employee Management Page
+
+Admin can:
+
+Create Employee
+
+Edit Employee
+
+Deactivate Employee
+
+Change Status
+Audit Page
+
+Track:
+
+Login
+
+Logout
+
+Employee Status Change
+
+Call Connected
+
+Call Completed
+
+Call Missed
+
+Queue Entry Added
+
+Queue Entry Removed
+Authentication
+
+JWT Authentication.
+
+Endpoints:
+
+POST /auth/login
+POST /auth/refresh
+
+Roles:
+
+ROLE_ADMIN
+ROLE_EMPLOYEE
+
+Seed users:
+
+admin/admin123
+employee/employee123
+Database
+
+Use Flyway migrations.
+
+Create indexes:
+
+caller_number
+call_sid
+status
+created_at
+queued_at
+WebSocket Events
+
+Broadcast:
+
+NEW_CALL
+CALL_CONNECTED
+CALL_COMPLETED
+CALL_MISSED
+QUEUE_UPDATED
+EMPLOYEE_STATUS_CHANGED
+
+Frontend must update instantly.
+
+UI Design
+
+Professional call-center dashboard.
+
+Material UI.
+
+Responsive.
+
+Dark mode.
+
+Light mode.
+
+Toast notifications.
+
+Loading states.
+
+Confirmation dialogs.
+
+Empty-state screens.
+
+Docker
+
+Provide:
+
+docker-compose.yml
+
+Services:
+
+mysql
+backend
+frontend
+nginx
+
+One-command startup.
+
+Future Compatibility
+
+Design so that later the restaurant's existing phone number can be:
+
+Forwarded to Exotel
+Ported to Exotel
+Routed through another telephony provider
+
+without changing business logic.
+
+Only the telephony implementation should change.
+
+Deliverables
+
+Generate:
+
+Complete Spring Boot backend
+Complete React frontend
+MySQL schema
+Flyway migrations
+Docker Compose
+JWT security
+Swagger/OpenAPI documentation
+Exotel webhook integration layer
+Queue engine
+Live WebSocket dashboard
+Analytics module
+Audit logging
+Unit tests
+Integration tests
+Complete README
+Sample Exotel webhook payloads
+Production-grade folder structure
+
+The final result should look and behave like a real restaurant call-center platform connected to an Exotel voice number, even if it is initially deployed using an Exotel trial account.
