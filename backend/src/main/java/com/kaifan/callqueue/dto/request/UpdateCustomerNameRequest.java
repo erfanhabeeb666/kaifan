@@ -9,4 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdateCustomerNameRequest {
     private String name;
+    private String deliveryAddress;
 }

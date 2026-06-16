@@ -10,6 +10,7 @@ import {
   IconButton,
   alpha,
   useTheme,
+  useMediaQuery,
   Skeleton,
   Table,
   TableBody,
@@ -34,7 +35,7 @@ import {
   Edit as EditIcon,
   Restaurant as RestaurantIcon,
   LocalShipping as DeliveryIcon,
-  DineIn as DineInIcon,
+  Dining as DineInIcon,
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCustomerDetail, syncPetpoojaOrders, createCustomer } from '../api/endpoints';
@@ -52,21 +53,22 @@ interface CallPopupProps {
 }
 
 const orderStatusColors: Record<string, { bg: string; text: string }> = {
-  'Accepted': { bg: 'rgba(16, 185, 129, 0.15)', text: '#10B981' },
-  'Preparing': { bg: 'rgba(245, 158, 11, 0.15)', text: '#F59E0B' },
-  'Ready': { bg: 'rgba(59, 130, 246, 0.15)', text: '#3B82F6' },
-  'Delivered': { bg: 'rgba(108, 99, 255, 0.15)', text: '#6C63FF' },
-  'Cancelled': { bg: 'rgba(239, 68, 68, 0.15)', text: '#EF4444' },
-  'Completed': { bg: 'rgba(16, 185, 129, 0.15)', text: '#10B981' },
+  'Accepted': { bg: 'rgba(34, 197, 94, 0.08)', text: '#16A34A' },
+  'Preparing': { bg: 'rgba(245, 158, 11, 0.08)', text: '#D97706' },
+  'Ready': { bg: 'rgba(59, 130, 246, 0.08)', text: '#2563EB' },
+  'Delivered': { bg: 'rgba(14, 165, 233, 0.08)', text: '#0284C7' },
+  'Cancelled': { bg: 'rgba(239, 68, 68, 0.08)', text: '#DC2626' },
+  'Completed': { bg: 'rgba(34, 197, 94, 0.08)', text: '#16A34A' },
 };
 
 function getStatusColor(status: string | null) {
-  if (!status) return { bg: 'rgba(100,116,139,0.1)', text: '#64748B' };
-  return orderStatusColors[status] || { bg: 'rgba(100,116,139,0.1)', text: '#64748B' };
+  if (!status) return { bg: 'rgba(148,163,184,0.08)', text: '#94A3B8' };
+  return orderStatusColors[status] || { bg: 'rgba(148,163,184,0.08)', text: '#94A3B8' };
 }
 
 export default function CallPopup({ open, onClose, activeCall }: CallPopupProps) {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const queryClient = useQueryClient();
   const phone = activeCall?.callerNumber || '';
   const [editingAddress, setEditingAddress] = useState(false);
@@ -120,22 +122,21 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
       onClose={onClose}
       maxWidth="md"
       fullWidth
+      fullScreen={isMobile}
       PaperProps={{
         sx: {
-          borderRadius: '24px',
-          background: theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)'
-            : 'linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)',
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
-          boxShadow: `0 20px 60px ${alpha(theme.palette.common.black, 0.3)}`,
+          borderRadius: { xs: 0, sm: '16px' },
+          border: { xs: 'none', sm: `1px solid ${alpha(theme.palette.primary.main, 0.08)}` },
           overflow: 'hidden',
         },
       }}
     >
-      {/* Header with gradient */}
+      {/* Header */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #6C63FF 0%, #FF6B9D 100%)',
+          background: theme.palette.mode === 'dark'
+            ? 'linear-gradient(135deg, #0C4A6E 0%, #0E7490 100%)'
+            : 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
           px: 3,
           py: 2.5,
           display: 'flex',
@@ -146,29 +147,28 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
             sx={{
-              width: 52,
-              height: 52,
-              borderRadius: '16px',
-              background: 'rgba(255,255,255,0.2)',
+              width: 46,
+              height: 46,
+              borderRadius: '12px',
+              background: 'rgba(255,255,255,0.15)',
               backdropFilter: 'blur(10px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              animation: 'pulse 2s infinite',
             }}
           >
-            <PhoneIcon sx={{ color: '#fff', fontSize: 28 }} />
+            <PhoneIcon sx={{ color: '#fff', fontSize: 24 }} />
           </Box>
           <Box>
-            <Typography variant="h5" sx={{ color: '#fff', fontWeight: 700 }}>
+            <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700, fontSize: '1.1rem' }}>
               {activeCall?.customerName || d?.name || 'Incoming Call'}
             </Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.82rem' }}>
               {phone} • Connected {activeCall?.answerTime ? dayjs(activeCall.answerTime).fromNow() : 'now'}
             </Typography>
           </Box>
         </Box>
-        <IconButton onClick={onClose} sx={{ color: 'rgba(255,255,255,0.8)' }}>
+        <IconButton onClick={onClose} sx={{ color: 'rgba(255,255,255,0.7)' }} size="small">
           <CloseIcon />
         </IconButton>
       </Box>
@@ -176,8 +176,8 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
       <DialogContent sx={{ p: 0 }}>
         {isLoading ? (
           <Box sx={{ p: 3 }}>
-            <Skeleton variant="rounded" height={120} sx={{ borderRadius: 3, mb: 2 }} />
-            <Skeleton variant="rounded" height={200} sx={{ borderRadius: 3 }} />
+            <Skeleton variant="rounded" height={100} sx={{ borderRadius: 2, mb: 2 }} />
+            <Skeleton variant="rounded" height={180} sx={{ borderRadius: 2 }} />
           </Box>
         ) : (
           <Box>
@@ -185,9 +185,9 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
             <Box
               sx={{
                 display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr 1fr' },
-                gap: 2,
-                p: 3,
+                gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr 1fr 1fr' },
+                gap: { xs: 1, sm: 1.5 },
+                p: { xs: 2, sm: 2.5 },
                 pb: 2,
               }}
             >
@@ -195,17 +195,17 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
               <Box
                 sx={{
                   p: 2,
-                  borderRadius: 3,
-                  background: alpha('#6C63FF', 0.08),
-                  border: `1px solid ${alpha('#6C63FF', 0.15)}`,
+                  borderRadius: 2,
+                  background: alpha('#0EA5E9', 0.06),
+                  border: `1px solid ${alpha('#0EA5E9', 0.1)}`,
                   textAlign: 'center',
                 }}
               >
-                <OrdersIcon sx={{ color: '#6C63FF', mb: 0.5 }} />
-                <Typography variant="h5" fontWeight={800} color="#6C63FF">
+                <OrdersIcon sx={{ color: '#0EA5E9', fontSize: 22, mb: 0.3 }} />
+                <Typography variant="h6" fontWeight={800} color="#0EA5E9" fontSize="1.2rem">
                   {d?.totalOrders ?? 0}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" fontSize="0.68rem">
                   Total Orders
                 </Typography>
               </Box>
@@ -214,17 +214,17 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
               <Box
                 sx={{
                   p: 2,
-                  borderRadius: 3,
-                  background: alpha('#10B981', 0.08),
-                  border: `1px solid ${alpha('#10B981', 0.15)}`,
+                  borderRadius: 2,
+                  background: alpha('#22C55E', 0.06),
+                  border: `1px solid ${alpha('#22C55E', 0.1)}`,
                   textAlign: 'center',
                 }}
               >
-                <RupeeIcon sx={{ color: '#10B981', mb: 0.5 }} />
-                <Typography variant="h5" fontWeight={800} color="#10B981">
+                <RupeeIcon sx={{ color: '#22C55E', fontSize: 22, mb: 0.3 }} />
+                <Typography variant="h6" fontWeight={800} color="#22C55E" fontSize="1.2rem">
                   ₹{d?.totalSpent?.toFixed(0) ?? '0'}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" fontSize="0.68rem">
                   Total Spent
                 </Typography>
               </Box>
@@ -233,17 +233,17 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
               <Box
                 sx={{
                   p: 2,
-                  borderRadius: 3,
-                  background: alpha('#F59E0B', 0.08),
-                  border: `1px solid ${alpha('#F59E0B', 0.15)}`,
+                  borderRadius: 2,
+                  background: alpha('#F59E0B', 0.06),
+                  border: `1px solid ${alpha('#F59E0B', 0.1)}`,
                   textAlign: 'center',
                 }}
               >
-                <ScheduleIcon sx={{ color: '#F59E0B', mb: 0.5 }} />
-                <Typography variant="body2" fontWeight={700} color="#F59E0B">
+                <ScheduleIcon sx={{ color: '#F59E0B', fontSize: 22, mb: 0.3 }} />
+                <Typography variant="body2" fontWeight={700} color="#D97706" fontSize="0.85rem">
                   {d?.customerSince ? dayjs(d.customerSince).fromNow(true) : 'New'}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" fontSize="0.68rem">
                   Customer Since
                 </Typography>
               </Box>
@@ -252,39 +252,39 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
               <Box
                 sx={{
                   p: 2,
-                  borderRadius: 3,
-                  background: alpha('#EC4899', 0.08),
-                  border: `1px solid ${alpha('#EC4899', 0.15)}`,
+                  borderRadius: 2,
+                  background: alpha('#8B5CF6', 0.06),
+                  border: `1px solid ${alpha('#8B5CF6', 0.1)}`,
                   textAlign: 'center',
                 }}
               >
-                <PersonIcon sx={{ color: '#EC4899', mb: 0.5 }} />
-                <Typography variant="body2" fontWeight={700} color="#EC4899" noWrap>
+                <PersonIcon sx={{ color: '#8B5CF6', fontSize: 22, mb: 0.3 }} />
+                <Typography variant="body2" fontWeight={700} color="#8B5CF6" noWrap fontSize="0.85rem">
                   {activeCall?.employeeName || '—'}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" fontSize="0.68rem">
                   Handled By
                 </Typography>
               </Box>
             </Box>
 
             {/* Delivery Address */}
-            <Box sx={{ px: 3, pb: 2 }}>
+            <Box sx={{ px: 2.5, pb: 2 }}>
               <Box
                 sx={{
-                  p: 2.5,
-                  borderRadius: 3,
-                  background: alpha(theme.palette.info.main, 0.06),
-                  border: `1px solid ${alpha(theme.palette.info.main, 0.12)}`,
+                  p: 2,
+                  borderRadius: 2,
+                  background: alpha(theme.palette.info.main, 0.04),
+                  border: `1px solid ${alpha(theme.palette.info.main, 0.08)}`,
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: 1.5,
                 }}
               >
-                <LocationIcon sx={{ color: theme.palette.info.main, mt: 0.3 }} />
+                <LocationIcon sx={{ color: theme.palette.info.main, mt: 0.2, fontSize: 20 }} />
                 <Box sx={{ flex: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="subtitle2" fontWeight={700} color="text.primary">
+                    <Typography variant="subtitle2" fontWeight={700} color="text.primary" fontSize="0.78rem">
                       Delivery Address
                     </Typography>
                     {!editingAddress && (
@@ -295,7 +295,7 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
                           setEditingAddress(true);
                         }}
                       >
-                        <EditIcon sx={{ fontSize: 16 }} />
+                        <EditIcon sx={{ fontSize: 14 }} />
                       </IconButton>
                     )}
                   </Box>
@@ -309,7 +309,6 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
                         value={addressInput}
                         onChange={(e) => setAddressInput(e.target.value)}
                         placeholder="Enter delivery address..."
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
                       />
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                         <Button
@@ -317,17 +316,17 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
                           variant="contained"
                           onClick={() => saveAddressMutation.mutate(addressInput)}
                           disabled={saveAddressMutation.isPending}
-                          sx={{ minWidth: 60 }}
+                          sx={{ minWidth: 56, fontSize: '0.75rem' }}
                         >
                           Save
                         </Button>
-                        <Button size="small" onClick={() => setEditingAddress(false)} sx={{ minWidth: 60 }}>
+                        <Button size="small" onClick={() => setEditingAddress(false)} sx={{ minWidth: 56, fontSize: '0.75rem' }}>
                           Cancel
                         </Button>
                       </Box>
                     </Box>
                   ) : (
-                    <Typography variant="body2" color={d?.deliveryAddress ? 'text.primary' : 'text.secondary'}>
+                    <Typography variant="body2" color={d?.deliveryAddress ? 'text.primary' : 'text.secondary'} fontSize="0.82rem">
                       {d?.deliveryAddress || 'No address on file — click edit to add'}
                     </Typography>
                   )}
@@ -336,10 +335,10 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
             </Box>
 
             {/* Past Orders Header */}
-            <Box sx={{ px: 3, pb: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ px: 2.5, pb: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <RestaurantIcon color="primary" sx={{ fontSize: 20 }} />
-                <Typography variant="h6" fontWeight={700}>
+                <RestaurantIcon sx={{ fontSize: 18, color: theme.palette.primary.main }} />
+                <Typography variant="h6" fontWeight={700} fontSize="0.95rem">
                   Past Orders
                 </Typography>
                 <Chip
@@ -347,7 +346,7 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
                   size="small"
                   variant="outlined"
                   color="primary"
-                  sx={{ fontWeight: 600 }}
+                  sx={{ fontWeight: 600, fontSize: '0.68rem' }}
                 />
               </Box>
               <Tooltip title="Sync orders from PetPooja">
@@ -370,7 +369,7 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
 
             {/* Orders Table */}
             {d?.recentOrders && d.recentOrders.length > 0 ? (
-              <TableContainer sx={{ maxHeight: 350 }}>
+              <TableContainer sx={{ maxHeight: 320 }}>
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
@@ -388,7 +387,7 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
                       return (
                         <TableRow key={order.id} hover>
                           <TableCell>
-                            <Typography variant="body2" fontWeight={600} sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                            <Typography variant="body2" fontWeight={600} sx={{ fontFamily: 'monospace', fontSize: '0.72rem' }}>
                               #{order.petpoojaOrderId}
                             </Typography>
                           </TableCell>
@@ -419,7 +418,7 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
                                 label={order.orderType}
                                 size="small"
                                 variant="outlined"
-                                sx={{ fontSize: '0.7rem' }}
+                                sx={{ fontSize: '0.68rem' }}
                               />
                             )}
                           </TableCell>
@@ -431,7 +430,7 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
                                 background: sc.bg,
                                 color: sc.text,
                                 fontWeight: 700,
-                                fontSize: '0.7rem',
+                                fontSize: '0.68rem',
                               }}
                             />
                           </TableCell>
@@ -458,14 +457,15 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
                 sx={{
                   p: 4,
                   textAlign: 'center',
-                  mx: 3,
-                  mb: 3,
-                  borderRadius: 3,
-                  background: alpha(theme.palette.text.secondary, 0.03),
+                  mx: 2.5,
+                  mb: 2.5,
+                  borderRadius: 2,
+                  background: alpha(theme.palette.text.secondary, 0.02),
+                  border: `1px dashed ${theme.palette.divider}`,
                 }}
               >
-                <OrdersIcon sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.3, mb: 1 }} />
-                <Typography color="text.secondary">No order history found</Typography>
+                <OrdersIcon sx={{ fontSize: 40, color: 'text.secondary', opacity: 0.2, mb: 1 }} />
+                <Typography variant="body2" color="text.secondary">No order history found</Typography>
                 <Typography variant="caption" color="text.secondary">
                   Orders will appear here once synced from PetPooja
                 </Typography>

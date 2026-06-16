@@ -52,10 +52,12 @@ export default function App() {
           toastOptions={{
             style: {
               background: mode === 'dark' ? '#1E293B' : '#fff',
-              color: mode === 'dark' ? '#F1F5F9' : '#1E293B',
-              borderRadius: '12px',
-              border: mode === 'dark' ? '1px solid rgba(148,163,184,0.1)' : '1px solid rgba(0,0,0,0.05)',
-              boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+              color: mode === 'dark' ? '#F1F5F9' : '#0F172A',
+              borderRadius: '10px',
+              border: mode === 'dark' ? '1px solid rgba(148,163,184,0.06)' : '1px solid rgba(15,23,42,0.06)',
+              boxShadow: mode === 'dark' ? '0 8px 24px rgba(0,0,0,0.3)' : '0 8px 24px rgba(15,23,42,0.08)',
+              fontSize: '0.875rem',
+              fontFamily: '"Inter", -apple-system, sans-serif',
             },
           }}
         />

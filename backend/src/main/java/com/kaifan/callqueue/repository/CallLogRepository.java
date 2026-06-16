@@ -16,11 +16,11 @@ import java.util.Optional;
 @Repository
 public interface CallLogRepository extends JpaRepository<CallLog, Long> {
 
-    Optional<CallLog> findByCallSid(String callSid);
+    Optional<CallLog> findFirstByCallSidOrderByIdDesc(String callSid);
 
     List<CallLog> findByStatus(CallStatus status);
 
-    @Query("SELECT c FROM CallLog c WHERE c.status = 'CONNECTED'")
+    @Query("SELECT c FROM CallLog c WHERE c.status = 'CONNECTED' ORDER BY c.id DESC")
     List<CallLog> findActiveCalls();
 
     @Query("SELECT c FROM CallLog c WHERE c.employee.id = :employeeId AND c.status = 'CONNECTED'")

@@ -53,9 +53,9 @@ import toast from 'react-hot-toast';
 dayjs.extend(relativeTime);
 
 const statusColors: Record<EmployeeStatus, string> = {
-  AVAILABLE: '#10B981',
+  AVAILABLE: '#22C55E',
   BUSY: '#EF4444',
-  OFFLINE: '#64748B',
+  OFFLINE: '#94A3B8',
 };
 
 const statusLabels: Record<EmployeeStatus, string> = {
@@ -75,48 +75,56 @@ interface StatCardProps {
   title: string;
   value: string | number;
   icon: React.ReactNode;
-  gradient: string;
+  color: string;
   subtitle?: string;
 }
 
-function StatCard({ title, value, icon, gradient, subtitle }: StatCardProps) {
+function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
   const theme = useTheme();
   return (
     <Card
       sx={{
         height: '100%',
-        transition: 'all 0.3s ease',
+        transition: 'all 0.2s ease',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: `0 12px 28px ${alpha(theme.palette.primary.main, 0.15)}`,
+          transform: 'translateY(-2px)',
+          boxShadow: `0 8px 24px ${alpha(color, 0.12)}`,
+          borderColor: alpha(color, 0.2),
         },
       }}
     >
-      <CardContent sx={{ p: 3 }}>
+      <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Box>
-            <Typography variant="body2" color="text.secondary" fontWeight={500} sx={{ mb: 0.5 }}>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              fontWeight={600}
+              sx={{ mb: 0.5, display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.68rem' }}
+            >
               {title}
             </Typography>
-            <Typography variant="h4" fontWeight={800} sx={{ lineHeight: 1.1 }}>
+            <Typography variant="h4" fontWeight={800} sx={{ lineHeight: 1.1, fontSize: '1.5rem' }}>
               {value}
             </Typography>
             {subtitle && (
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.3, display: 'block' }}>
                 {subtitle}
               </Typography>
             )}
           </Box>
           <Box
             sx={{
-              width: 48,
-              height: 48,
-              borderRadius: '14px',
-              background: gradient,
+              width: 40,
+              height: 40,
+              borderRadius: '10px',
+              background: alpha(color, 0.1),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
+              flexShrink: 0,
+              color: color,
+              '& .MuiSvgIcon-root': { fontSize: 20 },
             }}
           >
             {icon}
@@ -202,11 +210,11 @@ export default function DashboardPage() {
   if (isLoading && !d) {
     return (
       <Box>
-        <Typography variant="h4" sx={{ mb: 4 }}>Dashboard</Typography>
-        <Grid container spacing={3}>
+        <Typography variant="h4" sx={{ mb: 3 }}>Dashboard</Typography>
+        <Grid container spacing={2}>
           {Array.from({ length: 8 }).map((_, i) => (
             <Grid item xs={12} sm={6} md={3} key={i}>
-              <Skeleton variant="rounded" height={130} sx={{ borderRadius: 3 }} />
+              <Skeleton variant="rounded" height={110} sx={{ borderRadius: 2 }} />
             </Grid>
           ))}
         </Grid>
@@ -220,49 +228,50 @@ export default function DashboardPage() {
 
   return (
     <Box className="animate-fade-in">
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { xs: 2, md: 3 }, flexWrap: 'wrap', gap: 1 }}>
         <Box>
-          <Typography variant="h4">Dashboard</Typography>
-          <Typography variant="body2" color="text.secondary">
-            Real-time call center monitoring
+          <Typography variant="h4" sx={{ fontSize: { xs: '1.4rem', sm: '1.6rem', md: '1.75rem' } }}>Dashboard</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.3, display: { xs: 'none', sm: 'block' } }}>
+            Real-time call center overview
           </Typography>
         </Box>
         <Chip
           label="● Live"
           size="small"
           sx={{
-            background: 'rgba(16, 185, 129, 0.15)',
-            color: '#10B981',
+            background: alpha('#22C55E', 0.1),
+            color: '#22C55E',
             fontWeight: 700,
+            fontSize: '0.72rem',
             animation: 'pulse 2s infinite',
           }}
         />
       </Box>
 
       {/* Analytics Cards */}
-      <Grid container spacing={2.5} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
+      <Grid container spacing={{ xs: 1, sm: 1.5, md: 2 }} sx={{ mb: { xs: 2, md: 3 } }}>
+        <Grid item xs={6} sm={6} md={3}>
           <StatCard
             title="Calls Today"
             value={analytics?.callsToday ?? 0}
-            icon={<PhoneIcon sx={{ color: '#fff' }} />}
-            gradient="linear-gradient(135deg, #6C63FF, #8B84FF)"
+            icon={<PhoneIcon />}
+            color="#0EA5E9"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={6} md={3}>
           <StatCard
             title="This Week"
             value={analytics?.callsThisWeek ?? 0}
-            icon={<TrendingUpIcon sx={{ color: '#fff' }} />}
-            gradient="linear-gradient(135deg, #3B82F6, #60A5FA)"
+            icon={<TrendingUpIcon />}
+            color="#3B82F6"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Answered"
             value={analytics?.answeredCalls ?? 0}
-            icon={<PhoneCallbackIcon sx={{ color: '#fff' }} />}
-            gradient="linear-gradient(135deg, #10B981, #34D399)"
+            icon={<PhoneCallbackIcon />}
+            color="#22C55E"
             subtitle="This month"
           />
         </Grid>
@@ -270,8 +279,8 @@ export default function DashboardPage() {
           <StatCard
             title="Missed"
             value={analytics?.missedCalls ?? 0}
-            icon={<PhoneMissedIcon sx={{ color: '#fff' }} />}
-            gradient="linear-gradient(135deg, #EF4444, #F87171)"
+            icon={<PhoneMissedIcon />}
+            color="#EF4444"
             subtitle="This month"
           />
         </Grid>
@@ -279,55 +288,55 @@ export default function DashboardPage() {
           <StatCard
             title="Avg Wait"
             value={formatDuration(analytics?.averageWaitTimeSeconds ? Math.round(analytics.averageWaitTimeSeconds) : null)}
-            icon={<TimerIcon sx={{ color: '#fff' }} />}
-            gradient="linear-gradient(135deg, #F59E0B, #FBBF24)"
+            icon={<TimerIcon />}
+            color="#F59E0B"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Longest Wait"
             value={formatDuration(analytics?.longestWaitTimeSeconds)}
-            icon={<AccessTimeIcon sx={{ color: '#fff' }} />}
-            gradient="linear-gradient(135deg, #F97316, #FB923C)"
+            icon={<AccessTimeIcon />}
+            color="#F97316"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Avg Duration"
             value={formatDuration(analytics?.averageCallDurationSeconds ? Math.round(analytics.averageCallDurationSeconds) : null)}
-            icon={<PhoneIcon sx={{ color: '#fff' }} />}
-            gradient="linear-gradient(135deg, #8B5CF6, #A78BFA)"
+            icon={<PhoneIcon />}
+            color="#8B5CF6"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Queue Length"
             value={analytics?.currentQueueLength ?? 0}
-            icon={<QueueIcon sx={{ color: '#fff' }} />}
-            gradient="linear-gradient(135deg, #EC4899, #F472B6)"
+            icon={<QueueIcon />}
+            color="#EC4899"
           />
         </Grid>
       </Grid>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 1.5, md: 2.5 }}>
         {/* Active Call */}
         <Grid item xs={12} md={5}>
           <Card sx={{ height: '100%' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <PhoneIcon color="primary" /> Active Call
+            <CardContent sx={{ p: 2.5 }}>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.95rem' }}>
+                <PhoneIcon sx={{ fontSize: 20, color: theme.palette.primary.main }} /> Active Call
               </Typography>
               {d?.activeCall ? (
                 <Box
                   sx={{
-                    p: 3,
-                    borderRadius: 3,
-                    background: alpha(theme.palette.success.main, 0.08),
-                    border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                    p: 2.5,
+                    borderRadius: 2.5,
+                    background: alpha(theme.palette.success.main, 0.06),
+                    border: `1px solid ${alpha(theme.palette.success.main, 0.12)}`,
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="h5" fontWeight={700}>
+                    <Typography variant="h6" fontWeight={700} fontSize="1.1rem">
                       {d.activeCall.callerNumber}
                     </Typography>
                     <IconButton
@@ -335,16 +344,16 @@ export default function DashboardPage() {
                       color="primary"
                       onClick={() => d?.activeCall && handleOpenDialog(d.activeCall.callerNumber, d.activeCall.customerName)}
                     >
-                      <EditIcon fontSize="small" />
+                      <EditIcon sx={{ fontSize: 16 }} />
                     </IconButton>
                   </Box>
                   {d.activeCall.customerName ? (
-                    <Typography variant="subtitle1" color="primary" fontWeight={600} sx={{ mt: 0.5 }}>
-                      👤 {d.activeCall.customerName}
+                    <Typography variant="body2" color="primary" fontWeight={600} sx={{ mt: 0.5 }}>
+                      {d.activeCall.customerName}
                     </Typography>
                   ) : (
                     <Typography
-                      variant="body2"
+                      variant="caption"
                       color="text.secondary"
                       sx={{ mt: 0.5, cursor: 'pointer', textDecoration: 'underline', display: 'inline-block' }}
                       onClick={() => d?.activeCall && handleOpenDialog(d.activeCall.callerNumber)}
@@ -352,19 +361,19 @@ export default function DashboardPage() {
                       Add customer name
                     </Typography>
                   )}
-                  <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Box sx={{ mt: 1.5, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Chip
                       label={d.activeCall.status}
                       size="small"
                       sx={{
-                        background: alpha(theme.palette.success.main, 0.15),
+                        background: alpha(theme.palette.success.main, 0.12),
                         color: theme.palette.success.main,
                         fontWeight: 700,
                       }}
                     />
                     <Tooltip title="View customer details & orders">
                       <Chip
-                        icon={<ViewIcon sx={{ fontSize: 16 }} />}
+                        icon={<ViewIcon sx={{ fontSize: 14 }} />}
                         label="View Details"
                         size="small"
                         color="primary"
@@ -378,11 +387,11 @@ export default function DashboardPage() {
                     </Tooltip>
                   </Box>
                   {d.activeCall.employeeName && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                       Handled by: {d.activeCall.employeeName}
                     </Typography>
                   )}
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.3, display: 'block' }}>
                     Connected: {dayjs(d.activeCall.answerTime || d.activeCall.startTime).fromNow()}
                   </Typography>
                 </Box>
@@ -391,12 +400,13 @@ export default function DashboardPage() {
                   sx={{
                     p: 4,
                     textAlign: 'center',
-                    borderRadius: 3,
-                    background: alpha(theme.palette.text.secondary, 0.03),
+                    borderRadius: 2.5,
+                    background: alpha(theme.palette.text.secondary, 0.02),
+                    border: `1px dashed ${theme.palette.divider}`,
                   }}
                 >
-                  <PhoneIcon sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.3, mb: 1 }} />
-                  <Typography color="text.secondary">No active calls</Typography>
+                  <PhoneIcon sx={{ fontSize: 40, color: 'text.secondary', opacity: 0.2, mb: 1 }} />
+                  <Typography variant="body2" color="text.secondary">No active calls</Typography>
                 </Box>
               )}
             </CardContent>
@@ -406,10 +416,10 @@ export default function DashboardPage() {
         {/* Queue */}
         <Grid item xs={12} md={7}>
           <Card sx={{ height: '100%' }}>
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: 2.5 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <QueueIcon color="primary" /> Call Queue
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.95rem' }}>
+                  <QueueIcon sx={{ fontSize: 20, color: theme.palette.primary.main }} /> Call Queue
                 </Typography>
                 <Chip
                   label={`${d?.queueEntries?.length || 0} waiting`}
@@ -481,12 +491,13 @@ export default function DashboardPage() {
                   sx={{
                     p: 4,
                     textAlign: 'center',
-                    borderRadius: 3,
-                    background: alpha(theme.palette.text.secondary, 0.03),
+                    borderRadius: 2.5,
+                    background: alpha(theme.palette.text.secondary, 0.02),
+                    border: `1px dashed ${theme.palette.divider}`,
                   }}
                 >
-                  <QueueIcon sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.3, mb: 1 }} />
-                  <Typography color="text.secondary">Queue is empty</Typography>
+                  <QueueIcon sx={{ fontSize: 40, color: 'text.secondary', opacity: 0.2, mb: 1 }} />
+                  <Typography variant="body2" color="text.secondary">Queue is empty</Typography>
                 </Box>
               )}
             </CardContent>
@@ -496,10 +507,10 @@ export default function DashboardPage() {
         {/* PetPooja Recent Orders */}
         <Grid item xs={12}>
           <Card>
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: 2.5 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <OrdersIcon color="primary" /> PetPooja Orders
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.95rem' }}>
+                  <OrdersIcon sx={{ fontSize: 20, color: theme.palette.primary.main }} /> PetPooja Orders
                 </Typography>
                 <Chip
                   label={`${petpoojaOrdersData?.totalElements ?? 0} total`}
@@ -581,11 +592,11 @@ export default function DashboardPage() {
                                   fontWeight: 700,
                                   fontSize: '0.7rem',
                                   background: order.orderStatus === 'Delivered' || order.orderStatus === 'Completed'
-                                    ? alpha('#10B981', 0.12)
-                                    : alpha('#64748B', 0.1),
+                                    ? alpha('#22C55E', 0.1)
+                                    : alpha('#94A3B8', 0.08),
                                   color: order.orderStatus === 'Delivered' || order.orderStatus === 'Completed'
-                                    ? '#10B981'
-                                    : '#64748B',
+                                    ? '#22C55E'
+                                    : '#94A3B8',
                                 }}
                               />
                             </TableCell>
@@ -623,12 +634,13 @@ export default function DashboardPage() {
                   sx={{
                     p: 4,
                     textAlign: 'center',
-                    borderRadius: 3,
-                    background: alpha(theme.palette.text.secondary, 0.03),
+                    borderRadius: 2.5,
+                    background: alpha(theme.palette.text.secondary, 0.02),
+                    border: `1px dashed ${theme.palette.divider}`,
                   }}
                 >
-                  <OrdersIcon sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.3, mb: 1 }} />
-                  <Typography color="text.secondary">No PetPooja orders yet</Typography>
+                  <OrdersIcon sx={{ fontSize: 40, color: 'text.secondary', opacity: 0.2, mb: 1 }} />
+                  <Typography variant="body2" color="text.secondary">No PetPooja orders yet</Typography>
                   <Typography variant="caption" color="text.secondary">
                     Orders from PetPooja will appear here once synced
                   </Typography>
@@ -641,43 +653,45 @@ export default function DashboardPage() {
         {/* Employees */}
         <Grid item xs={12}>
           <Card>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <PersonIcon color="primary" /> Employee Status
+            <CardContent sx={{ p: 2.5 }}>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.95rem' }}>
+                <PersonIcon sx={{ fontSize: 20, color: theme.palette.primary.main }} /> Employee Status
               </Typography>
-              <Grid container spacing={2}>
+              <Grid container spacing={{ xs: 1, md: 1.5 }}>
                 {d?.employees?.map((emp) => (
                   <Grid item xs={12} sm={6} md={4} key={emp.id}>
                     <Box
                       sx={{
-                        p: 2.5,
-                        borderRadius: 3,
-                        border: `1px solid ${alpha(statusColors[emp.status], 0.2)}`,
-                        background: alpha(statusColors[emp.status], 0.05),
+                        p: 2,
+                        borderRadius: 2,
+                        border: `1px solid ${alpha(statusColors[emp.status], 0.12)}`,
+                        background: alpha(statusColors[emp.status], 0.03),
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 2,
-                        transition: 'all 0.2s ease',
+                        gap: 1.5,
+                        transition: 'all 0.15s ease',
                         '&:hover': {
-                          borderColor: alpha(statusColors[emp.status], 0.4),
+                          borderColor: alpha(statusColors[emp.status], 0.25),
+                          background: alpha(statusColors[emp.status], 0.05),
                         },
                       }}
                     >
                       <Box
                         sx={{
-                          width: 10,
-                          height: 10,
+                          width: 8,
+                          height: 8,
                           borderRadius: '50%',
                           background: statusColors[emp.status],
-                          boxShadow: `0 0 8px ${statusColors[emp.status]}`,
+                          boxShadow: `0 0 6px ${statusColors[emp.status]}`,
+                          flexShrink: 0,
                           ...(emp.status === 'AVAILABLE' && {
                             animation: 'pulse 2s infinite',
                           }),
                         }}
                       />
-                      <Box sx={{ flex: 1 }}>
-                        <Typography fontWeight={600}>{emp.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography fontWeight={600} fontSize="0.85rem" noWrap>{emp.name}</Typography>
+                        <Typography variant="caption" color="text.secondary" fontSize="0.72rem">
                           {emp.phoneNumber}
                         </Typography>
                       </Box>
@@ -685,9 +699,10 @@ export default function DashboardPage() {
                         label={statusLabels[emp.status]}
                         size="small"
                         sx={{
-                          background: alpha(statusColors[emp.status], 0.15),
+                          background: alpha(statusColors[emp.status], 0.1),
                           color: statusColors[emp.status],
                           fontWeight: 700,
+                          fontSize: '0.68rem',
                         }}
                       />
                     </Box>
@@ -696,7 +711,7 @@ export default function DashboardPage() {
                 {(!d?.employees || d.employees.length === 0) && (
                   <Grid item xs={12}>
                     <Box sx={{ p: 4, textAlign: 'center' }}>
-                      <Typography color="text.secondary">No employees found</Typography>
+                      <Typography variant="body2" color="text.secondary">No employees found</Typography>
                     </Box>
                   </Grid>
                 )}
@@ -707,7 +722,7 @@ export default function DashboardPage() {
       </Grid>
 
       {/* Edit/Add Customer Name Dialog */}
-      <Dialog open={openNameDialog} onClose={() => setOpenNameDialog(false)}>
+      <Dialog open={openNameDialog} onClose={() => setOpenNameDialog(false)} fullWidth maxWidth="xs">
         <DialogTitle>Save Customer Name</DialogTitle>
         <DialogContent sx={{ pt: 1, minWidth: 320 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>

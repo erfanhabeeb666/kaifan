@@ -41,17 +41,17 @@ import toast from 'react-hot-toast';
 import type { PetpoojaOrderResponse } from '../types';
 
 const orderStatusColors: Record<string, { bg: string; text: string }> = {
-  'Accepted': { bg: 'rgba(16, 185, 129, 0.15)', text: '#10B981' },
-  'Preparing': { bg: 'rgba(245, 158, 11, 0.15)', text: '#F59E0B' },
-  'Ready': { bg: 'rgba(59, 130, 246, 0.15)', text: '#3B82F6' },
-  'Delivered': { bg: 'rgba(108, 99, 255, 0.15)', text: '#6C63FF' },
-  'Cancelled': { bg: 'rgba(239, 68, 68, 0.15)', text: '#EF4444' },
-  'Completed': { bg: 'rgba(16, 185, 129, 0.15)', text: '#10B981' },
+  'Accepted': { bg: 'rgba(34, 197, 94, 0.08)', text: '#16A34A' },
+  'Preparing': { bg: 'rgba(245, 158, 11, 0.08)', text: '#D97706' },
+  'Ready': { bg: 'rgba(59, 130, 246, 0.08)', text: '#2563EB' },
+  'Delivered': { bg: 'rgba(14, 165, 233, 0.08)', text: '#0284C7' },
+  'Cancelled': { bg: 'rgba(239, 68, 68, 0.08)', text: '#DC2626' },
+  'Completed': { bg: 'rgba(34, 197, 94, 0.08)', text: '#16A34A' },
 };
 
 function getStatusColor(status: string | null) {
-  if (!status) return { bg: 'rgba(100,116,139,0.1)', text: '#64748B' };
-  return orderStatusColors[status] || { bg: 'rgba(100,116,139,0.1)', text: '#64748B' };
+  if (!status) return { bg: 'rgba(148,163,184,0.08)', text: '#94A3B8' };
+  return orderStatusColors[status] || { bg: 'rgba(148,163,184,0.08)', text: '#94A3B8' };
 }
 
 export default function PetpoojaOrdersPage() {
@@ -95,14 +95,14 @@ export default function PetpoojaOrdersPage() {
 
   return (
     <Box className="animate-fade-in">
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, mb: { xs: 2, md: 3 }, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1.5, sm: 0 } }}>
         <Box>
-          <Typography variant="h4" sx={{ mb: 1 }}>PetPooja Orders</Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="h4" sx={{ mb: 0.3, fontSize: { xs: '1.4rem', sm: '1.6rem', md: '1.75rem' } }}>PetPooja Orders</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
             View and manage orders fetched from PetPooja
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1, width: { xs: '100%', sm: 'auto' } }}>
           <TextField
             placeholder="Phone number..."
             size="small"
@@ -111,11 +111,11 @@ export default function PetpoojaOrdersPage() {
               setPhoneSearch(e.target.value);
               setPage(1);
             }}
-            sx={{ width: 220, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+            sx={{ width: { xs: '100%', sm: 200 } }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon color="action" />
+                  <SearchIcon color="action" sx={{ fontSize: 20 }} />
                 </InputAdornment>
               ),
             }}
@@ -127,6 +127,7 @@ export default function PetpoojaOrdersPage() {
                 startIcon={
                   <SyncIcon
                     sx={{
+                      fontSize: 18,
                       animation: syncMutation.isPending ? 'spin 1s linear infinite' : 'none',
                       '@keyframes spin': {
                         '0%': { transform: 'rotate(0deg)' },
@@ -137,6 +138,8 @@ export default function PetpoojaOrdersPage() {
                 }
                 onClick={() => syncMutation.mutate()}
                 disabled={!phoneSearch.trim() || syncMutation.isPending}
+                size="small"
+                sx={{ py: 1, whiteSpace: 'nowrap' }}
               >
                 Sync
               </Button>
@@ -150,13 +153,13 @@ export default function PetpoojaOrdersPage() {
           {isLoading ? (
             <Box sx={{ p: 3 }}>
               {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} height={50} sx={{ mb: 1, borderRadius: 2 }} />
+                <Skeleton key={i} height={48} sx={{ mb: 0.5, borderRadius: 1 }} />
               ))}
             </Box>
           ) : (
             <>
-              <TableContainer>
-                <Table>
+              <TableContainer sx={{ overflowX: 'auto' }}>
+                <Table sx={{ minWidth: 800 }}>
                   <TableHead>
                     <TableRow>
                       <TableCell>Order ID</TableCell>
@@ -176,7 +179,7 @@ export default function PetpoojaOrdersPage() {
                       return (
                         <TableRow key={order.id} hover>
                           <TableCell>
-                            <Typography variant="body2" fontWeight={600} sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                            <Typography variant="body2" fontWeight={600} sx={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>
                               #{order.petpoojaOrderId}
                             </Typography>
                           </TableCell>
@@ -217,7 +220,7 @@ export default function PetpoojaOrdersPage() {
                                 label={order.orderType}
                                 size="small"
                                 variant="outlined"
-                                sx={{ fontSize: '0.75rem' }}
+                                sx={{ fontSize: '0.72rem' }}
                               />
                             ) : '—'}
                           </TableCell>
@@ -229,12 +232,12 @@ export default function PetpoojaOrdersPage() {
                                 background: sc.bg,
                                 color: sc.text,
                                 fontWeight: 700,
-                                fontSize: '0.75rem',
+                                fontSize: '0.72rem',
                               }}
                             />
                           </TableCell>
                           <TableCell>
-                            <Typography variant="caption">
+                            <Typography variant="body2">
                               {order.paymentMode || '—'}
                             </Typography>
                           </TableCell>
@@ -272,8 +275,8 @@ export default function PetpoojaOrdersPage() {
                     {orders.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
-                          <OrdersIcon sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.3, mb: 1, display: 'block', mx: 'auto' }} />
-                          <Typography color="text.secondary">
+                          <OrdersIcon sx={{ fontSize: 40, color: 'text.secondary', opacity: 0.2, mb: 1, display: 'block', mx: 'auto' }} />
+                          <Typography variant="body2" color="text.secondary">
                             {phoneSearch
                               ? `No orders found for ${phoneSearch}`
                               : 'No PetPooja orders yet'}
@@ -309,13 +312,12 @@ export default function PetpoojaOrdersPage() {
         onClose={() => setSelectedOrder(null)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { borderRadius: '20px' } }}
       >
         {selectedOrder && (
           <>
             <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Box>
-                <Typography variant="h6" fontWeight={700}>
+                <Typography variant="h6" fontWeight={700} fontSize="1rem">
                   Order #{selectedOrder.petpoojaOrderId}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -324,15 +326,15 @@ export default function PetpoojaOrdersPage() {
                     : '—'}
                 </Typography>
               </Box>
-              <IconButton onClick={() => setSelectedOrder(null)}>
-                <CloseIcon />
+              <IconButton onClick={() => setSelectedOrder(null)} size="small">
+                <CloseIcon fontSize="small" />
               </IconButton>
             </DialogTitle>
             <DialogContent>
               {/* Customer info */}
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>Customer</Typography>
-                <Typography fontWeight={600}>
+                <Typography fontWeight={600} fontSize="0.9rem">
                   {selectedOrder.customerName || 'Unknown'} • {selectedOrder.customerPhone}
                 </Typography>
               </Box>
@@ -352,9 +354,9 @@ export default function PetpoojaOrdersPage() {
               {selectedOrder.items && selectedOrder.items.length > 0 ? (
                 <Box>
                   {selectedOrder.items.map((item, idx) => (
-                    <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: idx < selectedOrder.items.length - 1 ? `1px solid ${theme.palette.divider}` : 'none' }}>
+                    <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.8, borderBottom: idx < selectedOrder.items.length - 1 ? `1px solid ${theme.palette.divider}` : 'none' }}>
                       <Box>
-                        <Typography variant="body2" fontWeight={600}>
+                        <Typography variant="body2" fontWeight={600} fontSize="0.85rem">
                           {item.quantity}× {item.name}
                         </Typography>
                         {item.variant && (

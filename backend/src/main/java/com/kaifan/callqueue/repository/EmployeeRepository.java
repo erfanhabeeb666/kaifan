@@ -24,4 +24,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     List<Employee> findAvailableEmployeesOrderByIdleSince();
 
     Optional<Employee> findByUserId(Long userId);
+
+    Optional<Employee> findByPhoneNumber(String phoneNumber);
 }

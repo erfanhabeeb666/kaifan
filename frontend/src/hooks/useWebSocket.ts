@@ -6,7 +6,7 @@ import { useDashboardStore } from '../stores/dashboardStore';
 import { getQueue } from '../api/endpoints';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import type { WebSocketEvent, CallLogResponse, EmployeeResponse } from '../types';
+import type { WebSocketEvent, CallLogResponse, EmployeeResponse, AgentDiallingResponse } from '../types';
 
 export const useWebSocket = () => {
   const clientRef = useRef<Client | null>(null);
@@ -20,6 +20,7 @@ export const useWebSocket = () => {
       queryClient.invalidateQueries({ queryKey: ['callHistory'] });
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['petpoojaOrders'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 
       switch (event.type) {
         case 'NEW_CALL':
@@ -50,6 +51,20 @@ export const useWebSocket = () => {
         case 'EMPLOYEE_STATUS_CHANGED':
           updateEmployee(event.payload as EmployeeResponse);
           break;
+        case 'AGENT_DIALLING': {
+          const agentData = event.payload as AgentDiallingResponse;
+          const agentLabel = agentData.agentName || agentData.dialWhomNumber;
+          toast(`📲 Dialling ${agentLabel}...`, {
+            icon: '📲',
+            duration: 5000,
+            style: {
+              background: '#0EA5E9',
+              color: '#fff',
+              fontWeight: 600,
+            },
+          });
+          break;
+        }
       }
     },
     [updateActiveCall, updateEmployee, updateQueue, queryClient]

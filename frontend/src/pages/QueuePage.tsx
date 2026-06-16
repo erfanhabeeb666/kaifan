@@ -80,16 +80,16 @@ export default function QueuePage() {
   };
 
   const statusColor: Record<string, { bg: string; text: string }> = {
-    WAITING: { bg: 'rgba(245, 158, 11, 0.1)', text: '#F59E0B' },
-    CONNECTED: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10B981' },
-    COMPLETED: { bg: 'rgba(108, 99, 255, 0.1)', text: '#6C63FF' },
-    ABANDONED: { bg: 'rgba(239, 68, 68, 0.1)', text: '#EF4444' },
+    WAITING: { bg: 'rgba(245, 158, 11, 0.08)', text: '#D97706' },
+    CONNECTED: { bg: 'rgba(34, 197, 94, 0.08)', text: '#16A34A' },
+    COMPLETED: { bg: 'rgba(14, 165, 233, 0.08)', text: '#0284C7' },
+    ABANDONED: { bg: 'rgba(239, 68, 68, 0.08)', text: '#DC2626' },
   };
 
   return (
     <Box className="animate-fade-in">
-      <Typography variant="h4" sx={{ mb: 1 }}>Queue Management</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+      <Typography variant="h4" sx={{ mb: 0.5, fontSize: { xs: '1.4rem', sm: '1.6rem', md: '1.75rem' } }}>Queue Management</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: { xs: 2, md: 3 } }}>
         Monitor and manage the call queue
       </Typography>
 
@@ -98,12 +98,12 @@ export default function QueuePage() {
           {isLoading ? (
             <Box sx={{ p: 3 }}>
               {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} height={50} sx={{ mb: 1, borderRadius: 2 }} />
+                <Skeleton key={i} height={48} sx={{ mb: 0.5, borderRadius: 1 }} />
               ))}
             </Box>
           ) : (
             <TableContainer>
-              <Table>
+              <Table sx={{ minWidth: 550 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>Position</TableCell>
@@ -126,14 +126,20 @@ export default function QueuePage() {
                             '—'
                           )}
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{entry.callerNumber}</TableCell>
-                        <TableCell>{dayjs(entry.queuedAt).format('HH:mm:ss')}</TableCell>
                         <TableCell>
-                          {entry.waitTimeSeconds
-                            ? `${Math.floor(entry.waitTimeSeconds / 60)}m ${entry.waitTimeSeconds % 60}s`
-                            : entry.status === 'WAITING'
-                            ? dayjs(entry.queuedAt).fromNow(true)
-                            : '—'}
+                          <Typography variant="body2" fontWeight={600}>{entry.callerNumber}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">{dayjs(entry.queuedAt).format('HH:mm:ss')}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {entry.waitTimeSeconds
+                              ? `${Math.floor(entry.waitTimeSeconds / 60)}m ${entry.waitTimeSeconds % 60}s`
+                              : entry.status === 'WAITING'
+                              ? dayjs(entry.queuedAt).fromNow(true)
+                              : '—'}
+                          </Typography>
                         </TableCell>
                         <TableCell>
                           <Chip
@@ -178,7 +184,7 @@ export default function QueuePage() {
                   {(!queueData || queueData.length === 0) && (
                     <TableRow>
                       <TableCell colSpan={isAdmin ? 6 : 5} align="center" sx={{ py: 6 }}>
-                        <Typography color="text.secondary">Queue is empty</Typography>
+                        <Typography variant="body2" color="text.secondary">Queue is empty</Typography>
                       </TableCell>
                     </TableRow>
                   )}
@@ -193,13 +199,13 @@ export default function QueuePage() {
       <Dialog
         open={confirmDialog.open}
         onClose={() => setConfirmDialog({ open: false, id: 0, action: '' })}
-        PaperProps={{ sx: { borderRadius: 3, maxWidth: 400 } }}
+        PaperProps={{ sx: { maxWidth: 400 } }}
       >
         <DialogTitle>
           {confirmDialog.action === 'remove' ? 'Remove Caller' : 'Mark as Abandoned'}
         </DialogTitle>
         <DialogContent>
-          <Typography>
+          <Typography variant="body2">
             {confirmDialog.action === 'remove'
               ? 'Are you sure you want to remove this caller from the queue?'
               : 'Are you sure you want to mark this caller as abandoned?'}

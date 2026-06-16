@@ -16,4 +16,8 @@ public class ExotelWebhookRequest {
     private String Status;
     private String Direction;
     private String Duration;
+    private String RecordingUrl;
+    private String recordingUrl;
+    private String DialWhomNumber;
+    private String dialWhomNumber;
 }

@@ -10,11 +10,13 @@ public interface TelephonyProvider {
 
     void handleCallConnected(String callSid);
 
-    void handleCallCompleted(String callSid);
+    void handleCallCompleted(String callSid, String recordingUrl);
 
     void handleCallMissed(String callSid);
 
     void connectNextQueuedCaller();
+
+    void handleAgentDialling(String callSid, String dialWhomNumber, String callerNumber, String status);
 
     void makeOutboundCall(String fromNumber, String toNumber);
 }

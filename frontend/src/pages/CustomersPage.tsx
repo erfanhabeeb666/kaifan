@@ -65,9 +65,10 @@ export default function CustomersPage() {
   const [broadcastDialogOpen, setBroadcastDialogOpen] = useState(false);
 
   // Selected item states
-  const [selectedCustomer, setSelectedCustomer] = useState<{ id: number; phoneNumber: string; name: string } | null>(null);
-  const [newCustomer, setNewCustomer] = useState({ phoneNumber: '', name: '' });
+  const [selectedCustomer, setSelectedCustomer] = useState<{ id: number; phoneNumber: string; name: string; deliveryAddress?: string } | null>(null);
+  const [newCustomer, setNewCustomer] = useState({ phoneNumber: '', name: '', deliveryAddress: '' });
   const [editName, setEditName] = useState('');
+  const [editAddress, setEditAddress] = useState('');
   
   // Local dummy groups state
   const [groups, setGroups] = useState(INITIAL_GROUPS);
@@ -94,7 +95,7 @@ export default function CustomersPage() {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       toast.success('Customer added successfully');
       setAddDialogOpen(false);
-      setNewCustomer({ phoneNumber: '', name: '' });
+      setNewCustomer({ phoneNumber: '', name: '', deliveryAddress: '' });
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || 'Failed to add customer');
@@ -102,10 +103,11 @@ export default function CustomersPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, name }: { id: number; name: string }) => updateCustomerName(id, { name }),
+    mutationFn: ({ id, name, deliveryAddress }: { id: number; name: string; deliveryAddress?: string }) => 
+      updateCustomerName(id, { name, deliveryAddress }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
-      toast.success('Customer name updated');
+      toast.success('Customer updated');
       setEditDialogOpen(false);
       setSelectedCustomer(null);
     },
@@ -175,14 +177,14 @@ export default function CustomersPage() {
 
   return (
     <Box className="animate-fade-in">
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 1.5 }}>
         <Box>
-          <Typography variant="h4" sx={{ mb: 1 }}>Customer Database</Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="h4" sx={{ mb: 0.3, fontSize: { xs: '1.4rem', sm: '1.6rem', md: '1.75rem' } }}>Customer Database</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
             Manage caller directory and send bulk campaigns
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
           {activeTab === 0 ? (
             <Button
               variant="contained"
@@ -204,20 +206,20 @@ export default function CustomersPage() {
         </Box>
       </Box>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={activeTab} onChange={(_, val) => setActiveTab(val)}>
-          <Tab label="Directory" sx={{ fontWeight: 600 }} />
-          <Tab label="WhatsApp Groups (Simulated)" sx={{ fontWeight: 600 }} />
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: { xs: 2, md: 3 } }}>
+        <Tabs value={activeTab} onChange={(_, val) => setActiveTab(val)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
+          <Tab label="Directory" />
+          <Tab label="WhatsApp Groups" />
         </Tabs>
       </Box>
 
       {/* Directory Tab */}
       {activeTab === 0 && (
-        <Grid container spacing={3}>
+        <Grid container spacing={2.5}>
           <Grid item xs={12}>
             <Card>
               <CardContent sx={{ p: 0 }}>
-                <Box sx={{ p: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
+                <Box sx={{ p: 2.5, display: 'flex', gap: 2, alignItems: 'center' }}>
                   <TextField
                     placeholder="Search by name or number..."
                     size="small"
@@ -226,11 +228,11 @@ export default function CustomersPage() {
                       setSearchQuery(e.target.value);
                       setPage(1);
                     }}
-                    sx={{ maxWidth: 400, width: '100%' }}
+                    sx={{ maxWidth: 360, width: '100%' }}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <SearchIcon color="action" />
+                          <SearchIcon color="action" sx={{ fontSize: 20 }} />
                         </InputAdornment>
                       ),
                     }}
@@ -240,13 +242,13 @@ export default function CustomersPage() {
                 {isLoading ? (
                   <Box sx={{ p: 3 }}>
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Skeleton key={i} height={50} sx={{ mb: 1, borderRadius: 2 }} />
+                      <Skeleton key={i} height={48} sx={{ mb: 0.5, borderRadius: 1 }} />
                     ))}
                   </Box>
                 ) : (
                   <>
-                    <TableContainer>
-                      <Table>
+                    <TableContainer sx={{ overflowX: 'auto' }}>
+                      <Table sx={{ minWidth: 600 }}>
                         <TableHead>
                           <TableRow>
                             <TableCell>Phone Number</TableCell>
@@ -259,14 +261,16 @@ export default function CustomersPage() {
                         <TableBody>
                           {customersList.map((customer) => (
                             <TableRow key={customer.id} hover>
-                              <TableCell sx={{ fontWeight: 600 }}>{customer.phoneNumber}</TableCell>
+                              <TableCell>
+                                <Typography variant="body2" fontWeight={600}>{customer.phoneNumber}</Typography>
+                              </TableCell>
                               <TableCell>
                                 {customer.name ? (
                                   <Chip
                                     label={customer.name}
                                     size="small"
                                     sx={{
-                                      background: alpha(theme.palette.primary.main, 0.08),
+                                      background: alpha(theme.palette.primary.main, 0.06),
                                       color: theme.palette.primary.main,
                                       fontWeight: 600,
                                     }}
@@ -282,9 +286,11 @@ export default function CustomersPage() {
                                   {customer.deliveryAddress || <Typography variant="body2" component="span" color="text.secondary" sx={{ fontStyle: 'italic' }}>Not provided</Typography>}
                                 </Typography>
                               </TableCell>
-                              <TableCell>{dayjs(customer.createdAt).format('YYYY-MM-DD HH:mm')}</TableCell>
+                              <TableCell>
+                                <Typography variant="body2">{dayjs(customer.createdAt).format('YYYY-MM-DD HH:mm')}</Typography>
+                              </TableCell>
                               <TableCell align="right">
-                                <Tooltip title="Edit Name">
+                                <Tooltip title="Edit Customer">
                                   <IconButton
                                     size="small"
                                     color="primary"
@@ -293,8 +299,10 @@ export default function CustomersPage() {
                                         id: customer.id,
                                         phoneNumber: customer.phoneNumber,
                                         name: customer.name || '',
+                                        deliveryAddress: customer.deliveryAddress || '',
                                       });
                                       setEditName(customer.name || '');
+                                      setEditAddress(customer.deliveryAddress || '');
                                       setEditDialogOpen(true);
                                     }}
                                   >
@@ -323,7 +331,7 @@ export default function CustomersPage() {
                           {customersList.length === 0 && (
                             <TableRow>
                               <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
-                                <Typography color="text.secondary">No customers found</Typography>
+                                <Typography variant="body2" color="text.secondary">No customers found</Typography>
                               </TableCell>
                             </TableRow>
                           )}
@@ -332,7 +340,7 @@ export default function CustomersPage() {
                     </TableContainer>
 
                     {totalPages > 1 && (
-                      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'center', p: 2.5 }}>
                         <Pagination
                           count={totalPages}
                           page={page}
@@ -351,16 +359,16 @@ export default function CustomersPage() {
 
       {/* WhatsApp Groups Tab */}
       {activeTab === 1 && (
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={4} sx={{ display: 'flex' }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={4} sx={{ display: 'flex' }}>
             <Card sx={{ flex: 1, border: `1px dashed ${theme.palette.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
               <Box sx={{ textAlign: 'center' }}>
-                <GroupIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-                <Typography variant="h6" sx={{ mb: 1 }}>Create a New Group</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 240 }}>
+                <GroupIcon sx={{ fontSize: 40, color: 'text.secondary', opacity: 0.3, mb: 1.5 }} />
+                <Typography variant="h6" sx={{ mb: 0.5, fontSize: '1rem' }}>Create a New Group</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5, maxWidth: 220, mx: 'auto' }}>
                   Organize your customer base to send targeted broadcasts
                 </Typography>
-                <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setGroupDialogOpen(true)}>
+                <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setGroupDialogOpen(true)} size="small">
                   Create Group
                 </Button>
               </Box>
@@ -368,14 +376,14 @@ export default function CustomersPage() {
           </Grid>
 
           {groups.map((group) => (
-            <Grid item xs={12} md={4} key={group.id} sx={{ display: 'flex' }}>
+            <Grid item xs={12} sm={6} md={4} key={group.id} sx={{ display: 'flex' }}>
               <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <CardContent sx={{ flex: 1, p: 3 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>{group.name}</Typography>
-                    <Chip label={`${group.count} Customers`} size="small" color="secondary" sx={{ fontWeight: 600 }} />
+                <CardContent sx={{ flex: 1, p: 2.5 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '0.95rem' }}>{group.name}</Typography>
+                    <Chip label={`${group.count}`} size="small" color="secondary" sx={{ fontWeight: 600 }} />
                   </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3, minHeight: 40 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5, minHeight: 36, fontSize: '0.82rem' }}>
                     {group.description || 'No description provided'}
                   </Typography>
                   <Button
@@ -388,6 +396,7 @@ export default function CustomersPage() {
                       setBroadcastDialogOpen(true);
                     }}
                     sx={{ mt: 'auto' }}
+                    size="small"
                   >
                     Send Broadcast
                   </Button>
@@ -419,6 +428,15 @@ export default function CustomersPage() {
               value={newCustomer.name}
               onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
             />
+            <TextField
+              label="Delivery Address"
+              placeholder="Optional Delivery Address"
+              fullWidth
+              multiline
+              rows={2}
+              value={newCustomer.deliveryAddress}
+              onChange={(e) => setNewCustomer({ ...newCustomer, deliveryAddress: e.target.value })}
+            />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
             <Button onClick={() => setAddDialogOpen(false)}>Cancel</Button>
@@ -448,6 +466,14 @@ export default function CustomersPage() {
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
             />
+            <TextField
+              label="Delivery Address"
+              fullWidth
+              multiline
+              rows={2}
+              value={editAddress}
+              onChange={(e) => setEditAddress(e.target.value)}
+            />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
             <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
@@ -462,7 +488,7 @@ export default function CustomersPage() {
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
         <DialogTitle>Delete Customer</DialogTitle>
         <DialogContent>
-          <Typography>
+          <Typography variant="body2">
             Are you sure you want to delete the customer <strong>{selectedCustomer?.name || selectedCustomer?.phoneNumber}</strong>?
             This will permanently remove their records.
           </Typography>

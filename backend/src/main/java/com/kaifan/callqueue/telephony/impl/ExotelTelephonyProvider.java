@@ -61,6 +61,12 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
         // Ensure number is stored in customer database
         customerService.ensureCustomerExists(phoneNumber);
 
+        // Check if we already processed an incoming webhook for this call
+        if (callLogRepository.findFirstByCallSidOrderByIdDesc(callSid).isPresent()) {
+            log.warn("Incoming call already registered for callSid={}. Ignoring duplicate webhook.", callSid);
+            return;
+        }
+
         // Create call log
         CallLog callLog = CallLog.builder()
                 .callSid(callSid)
@@ -96,7 +102,7 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
     public void handleCallConnected(String callSid) {
         log.info("Call connected: callSid={}", callSid);
 
-        callLogRepository.findByCallSid(callSid).ifPresent(callLog -> {
+        callLogRepository.findFirstByCallSidOrderByIdDesc(callSid).ifPresent(callLog -> {
             callLog.setStatus(CallStatus.CONNECTED);
             callLog.setAnswerTime(LocalDateTime.now());
             callLogRepository.save(callLog);
@@ -109,12 +115,15 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
 
     @Override
     @Transactional
-    public void handleCallCompleted(String callSid) {
-        log.info("Call completed: callSid={}", callSid);
+    public void handleCallCompleted(String callSid, String recordingUrl) {
+        log.info("Call completed: callSid={}, recordingUrl={}", callSid, recordingUrl);
 
-        callLogRepository.findByCallSid(callSid).ifPresent(callLog -> {
+        callLogRepository.findFirstByCallSidOrderByIdDesc(callSid).ifPresent(callLog -> {
             callLog.setStatus(CallStatus.COMPLETED);
             callLog.setEndTime(LocalDateTime.now());
+            if (recordingUrl != null && !recordingUrl.isBlank()) {
+                callLog.setRecordingUrl(recordingUrl);
+            }
 
             if (callLog.getAnswerTime() != null) {
                 long duration = Duration.between(callLog.getAnswerTime(), callLog.getEndTime()).getSeconds();
@@ -136,6 +145,16 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
             auditService.log("SYSTEM", "CALL_COMPLETED",
                     "Call " + callSid + " completed. Duration: " + callLog.getDurationSeconds() + "s");
 
+            // Update queue entry if it exists
+            queueEntryRepository.findFirstByCallSidOrderByIdDesc(callSid).ifPresent(queueEntry -> {
+                if (queueEntry.getStatus() == QueueStatus.WAITING || queueEntry.getStatus() == QueueStatus.CONNECTED) {
+                    queueEntry.setStatus(QueueStatus.COMPLETED);
+                    queueEntryRepository.save(queueEntry);
+                    queueService.repositionQueue();
+                    eventPublisher.publishQueueUpdated();
+                }
+            });
+
             // Auto-connect next queued caller
             connectNextQueuedCaller();
         });
@@ -146,7 +165,7 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
     public void handleCallMissed(String callSid) {
         log.info("Call missed: callSid={}", callSid);
 
-        callLogRepository.findByCallSid(callSid).ifPresent(callLog -> {
+        callLogRepository.findFirstByCallSidOrderByIdDesc(callSid).ifPresent(callLog -> {
             callLog.setStatus(CallStatus.MISSED);
             callLog.setMissed(true);
             callLog.setEndTime(LocalDateTime.now());
@@ -164,6 +183,16 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
             eventPublisher.publishCallMissed(callLog);
             auditService.log("SYSTEM", "CALL_MISSED",
                     "Call " + callSid + " missed from " + callLog.getCallerNumber());
+
+            // Abandon queue entry if it exists and is waiting
+            queueEntryRepository.findFirstByCallSidOrderByIdDesc(callSid).ifPresent(queueEntry -> {
+                if (queueEntry.getStatus() == QueueStatus.WAITING) {
+                    queueEntry.setStatus(QueueStatus.ABANDONED);
+                    queueEntryRepository.save(queueEntry);
+                    queueService.repositionQueue();
+                    eventPublisher.publishQueueUpdated();
+                }
+            });
         });
     }
 
@@ -198,7 +227,7 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
                 queueEntryRepository.save(queueEntry);
 
                 // Create/update call log for the queued caller
-                CallLog queuedCallLog = callLogRepository.findByCallSid(queueEntry.getCallSid())
+                CallLog queuedCallLog = callLogRepository.findFirstByCallSidOrderByIdDesc(queueEntry.getCallSid())
                         .orElse(CallLog.builder()
                                 .callSid(queueEntry.getCallSid())
                                 .callerNumber(queueEntry.getCallerNumber())
@@ -215,6 +244,54 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
                         "Caller " + queueEntry.getCallerNumber() + " dequeued and connected to " + employee.getName());
             }
         });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void handleAgentDialling(String callSid, String dialWhomNumber, String callerNumber, String status) {
+        log.info("Agent dialling event: callSid={}, dialWhomNumber={}, caller={}, status={}",
+                callSid, dialWhomNumber, callerNumber, status);
+
+        // Try to find the employee being dialled by phone number
+        // Exotel may send the number with or without country code prefix
+        com.kaifan.callqueue.dto.response.AgentDiallingResponse.AgentDiallingResponseBuilder responseBuilder =
+                com.kaifan.callqueue.dto.response.AgentDiallingResponse.builder()
+                        .callSid(callSid)
+                        .dialWhomNumber(dialWhomNumber)
+                        .callerNumber(callerNumber)
+                        .status(status);
+
+        // Look up by exact match first, then try stripped variants
+        Employee employee = employeeRepository.findByPhoneNumber(dialWhomNumber).orElse(null);
+        if (employee == null && dialWhomNumber != null) {
+            // Try with/without +91, 0 prefix
+            String stripped = dialWhomNumber.replaceAll("[^0-9]", "");
+            if (stripped.startsWith("91") && stripped.length() > 10) {
+                stripped = stripped.substring(2);
+            }
+            if (stripped.startsWith("0") && stripped.length() > 10) {
+                stripped = stripped.substring(1);
+            }
+            // Try common formats
+            for (String prefix : new String[]{"", "+91", "91", "0"}) {
+                String candidate = prefix + stripped;
+                employee = employeeRepository.findByPhoneNumber(candidate).orElse(null);
+                if (employee != null) break;
+            }
+        }
+
+        if (employee != null) {
+            responseBuilder.agentName(employee.getName());
+            responseBuilder.agentId(employee.getId());
+            log.info("Agent identified: {} (id={})", employee.getName(), employee.getId());
+        } else {
+            log.warn("Could not find employee for dialWhomNumber={}", dialWhomNumber);
+        }
+
+        eventPublisher.publishAgentDialling(responseBuilder.build());
+        auditService.log("SYSTEM", "AGENT_DIALLING",
+                "Dialling agent " + (employee != null ? employee.getName() : dialWhomNumber)
+                        + " for call " + callSid + " from " + callerNumber);
     }
 
     @Override

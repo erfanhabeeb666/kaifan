@@ -52,6 +52,9 @@ public class CallLog {
     @Column(nullable = false)
     private Boolean missed = false;
 
+    @Column(name = "recording_url", length = 1024)
+    private String recordingUrl;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

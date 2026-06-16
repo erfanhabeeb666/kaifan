@@ -1,5 +1,6 @@
 package com.kaifan.callqueue.websocket;
 
+import com.kaifan.callqueue.dto.response.AgentDiallingResponse;
 import com.kaifan.callqueue.dto.response.WebSocketEvent;
 import com.kaifan.callqueue.entity.CallLog;
 import com.kaifan.callqueue.entity.Employee;
@@ -53,5 +54,11 @@ public class WebSocketEventPublisher {
         log.debug("Publishing EMPLOYEE_STATUS_CHANGED for employee={}", employee.getName());
         messagingTemplate.convertAndSend(TOPIC_DASHBOARD,
                 WebSocketEvent.of("EMPLOYEE_STATUS_CHANGED", entityMapper.toEmployeeResponse(employee)));
+    }
+
+    public void publishAgentDialling(AgentDiallingResponse payload) {
+        log.debug("Publishing AGENT_DIALLING event for callSid={}, agent={}", payload.getCallSid(), payload.getAgentName());
+        messagingTemplate.convertAndSend(TOPIC_DASHBOARD,
+                WebSocketEvent.of("AGENT_DIALLING", payload));
     }
 }

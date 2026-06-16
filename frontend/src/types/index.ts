@@ -47,6 +47,7 @@ export interface CallLogResponse {
   endTime: string | null;
   durationSeconds: number | null;
   missed: boolean;
+  recordingUrl?: string | null;
   createdAt: string;
 }
 
@@ -95,6 +96,15 @@ export interface WebSocketEvent {
   payload: unknown;
 }
 
+export interface AgentDiallingResponse {
+  callSid: string;
+  dialWhomNumber: string;
+  callerNumber: string | null;
+  status: string | null;
+  agentName: string | null;
+  agentId: number | null;
+}
+
 export interface PageResponse<T> {
   content: T[];
   totalPages: number;
@@ -131,6 +141,7 @@ export interface SaveCustomerRequest {
 
 export interface UpdateCustomerNameRequest {
   name: string;
+  deliveryAddress?: string;
 }
 
 // PetPooja types

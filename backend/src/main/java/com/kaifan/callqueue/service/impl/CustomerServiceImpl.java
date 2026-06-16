@@ -61,6 +61,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found: " + id));
 
         customer.setName(request.getName());
+        customer.setDeliveryAddress(request.getDeliveryAddress());
         customer = customerRepository.save(customer);
         log.info("Updated customer name for {}: {}", customer.getPhoneNumber(), customer.getName());
         return entityMapper.toCustomerResponse(customer);

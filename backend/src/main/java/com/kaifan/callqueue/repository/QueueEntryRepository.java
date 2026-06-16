@@ -30,7 +30,7 @@ public interface QueueEntryRepository extends JpaRepository<QueueEntry, Long> {
     @Query("SELECT MAX(q.waitTimeSeconds) FROM QueueEntry q WHERE q.waitTimeSeconds IS NOT NULL AND q.connectedAt IS NOT NULL")
     Integer maxWaitTime();
 
-    Optional<QueueEntry> findByCallSid(String callSid);
+    Optional<QueueEntry> findFirstByCallSidOrderByIdDesc(String callSid);
 
     @Query("SELECT COALESCE(MAX(q.queuePosition), 0) FROM QueueEntry q WHERE q.status = 'WAITING'")
     Integer findMaxQueuePosition();

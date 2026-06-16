@@ -45,6 +45,11 @@ public class ExotelWebhookController {
             log.warn("Missing CallSid or From in Exotel webhook parameters");
             return ResponseEntity.badRequest().body(ApiResponse.error("Missing CallSid or From"));
         }
+        finalFrom = finalFrom.trim();
+        if (finalFrom.startsWith(" ")) {
+            finalFrom = "+" + finalFrom.substring(1);
+        }
+        finalFrom = finalFrom.replace(" ", "+");
         telephonyProvider.handleIncomingCall(finalCallSid, finalFrom);
         return ResponseEntity.ok(ApiResponse.success("Incoming call processed"));
     }
@@ -75,8 +80,9 @@ public class ExotelWebhookController {
     @PostMapping(value = "/completed", consumes = "application/json")
     @Operation(summary = "Handle call completed webhook from Exotel (JSON)")
     public ResponseEntity<ApiResponse<String>> handleCallCompletedJson(@RequestBody ExotelWebhookRequest request) {
-        log.info("Exotel call completed JSON webhook: CallSid={}", request.getCallSid());
-        telephonyProvider.handleCallCompleted(request.getCallSid());
+        String recordingUrl = request.getRecordingUrl() != null ? request.getRecordingUrl() : request.getRecordingUrl();
+        log.info("Exotel call completed JSON webhook: CallSid={}, recordingUrl={}", request.getCallSid(), recordingUrl);
+        telephonyProvider.handleCallCompleted(request.getCallSid(), recordingUrl);
         return ResponseEntity.ok(ApiResponse.success("Call completed processed"));
     }
 
@@ -84,15 +90,53 @@ public class ExotelWebhookController {
     @Operation(summary = "Handle call completed webhook from Exotel (Form/GET)")
     public ResponseEntity<ApiResponse<String>> handleCallCompletedForm(
             @RequestParam(value = "CallSid", required = false) String callSid,
-            @RequestParam(value = "callSid", required = false) String callSidLower) {
+            @RequestParam(value = "callSid", required = false) String callSidLower,
+            @RequestParam(value = "RecordingUrl", required = false) String recordingUrl,
+            @RequestParam(value = "recordingUrl", required = false) String recordingUrlLower) {
         String finalCallSid = callSid != null ? callSid : callSidLower;
-        log.info("Exotel call completed Form/GET webhook: CallSid={}", finalCallSid);
+        String finalRecordingUrl = recordingUrl != null ? recordingUrl : recordingUrlLower;
+        log.info("Exotel call completed Form/GET webhook: CallSid={}, recordingUrl={}", finalCallSid, finalRecordingUrl);
         if (finalCallSid == null) {
             log.warn("Missing CallSid in Exotel webhook parameters");
             return ResponseEntity.badRequest().body(ApiResponse.error("Missing CallSid"));
         }
-        telephonyProvider.handleCallCompleted(finalCallSid);
+        telephonyProvider.handleCallCompleted(finalCallSid, finalRecordingUrl);
         return ResponseEntity.ok(ApiResponse.success("Call completed processed"));
+    }
+
+    @PostMapping(value = "/agent-dialling", consumes = "application/json")
+    @Operation(summary = "Handle currently active agent popup webhook from Exotel (JSON)")
+    public ResponseEntity<ApiResponse<String>> handleAgentDiallingJson(@RequestBody ExotelWebhookRequest request) {
+        log.info("Exotel agent dialling JSON webhook: CallSid={}, DialWhomNumber={}, From={}, Status={}",
+                request.getCallSid(), request.getDialWhomNumber(), request.getFrom(), request.getStatus());
+        telephonyProvider.handleAgentDialling(
+                request.getCallSid(), request.getDialWhomNumber(), request.getFrom(), request.getStatus());
+        return ResponseEntity.ok(ApiResponse.success("Agent dialling processed"));
+    }
+
+    @RequestMapping(value = "/agent-dialling")
+    @Operation(summary = "Handle currently active agent popup webhook from Exotel (Form/GET)")
+    public ResponseEntity<ApiResponse<String>> handleAgentDiallingForm(
+            @RequestParam(value = "CallSid", required = false) String callSid,
+            @RequestParam(value = "callSid", required = false) String callSidLower,
+            @RequestParam(value = "DialWhomNumber", required = false) String dialWhomNumber,
+            @RequestParam(value = "dialWhomNumber", required = false) String dialWhomNumberLower,
+            @RequestParam(value = "From", required = false) String from,
+            @RequestParam(value = "from", required = false) String fromLower,
+            @RequestParam(value = "Status", required = false) String status,
+            @RequestParam(value = "status", required = false) String statusLower) {
+        String finalCallSid = callSid != null ? callSid : callSidLower;
+        String finalDialWhomNumber = dialWhomNumber != null ? dialWhomNumber : dialWhomNumberLower;
+        String finalFrom = from != null ? from : fromLower;
+        String finalStatus = status != null ? status : statusLower;
+        log.info("Exotel agent dialling Form/GET webhook: CallSid={}, DialWhomNumber={}, From={}, Status={}",
+                finalCallSid, finalDialWhomNumber, finalFrom, finalStatus);
+        if (finalCallSid == null || finalDialWhomNumber == null) {
+            log.warn("Missing CallSid or DialWhomNumber in Exotel agent dialling webhook");
+            return ResponseEntity.badRequest().body(ApiResponse.error("Missing CallSid or DialWhomNumber"));
+        }
+        telephonyProvider.handleAgentDialling(finalCallSid, finalDialWhomNumber, finalFrom, finalStatus);
+        return ResponseEntity.ok(ApiResponse.success("Agent dialling processed"));
     }
 
     @PostMapping(value = "/missed", consumes = "application/json")

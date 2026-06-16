@@ -26,5 +26,6 @@ public class CallLogResponse {
     private LocalDateTime endTime;
     private Integer durationSeconds;
     private Boolean missed;
+    private String recordingUrl;
     private LocalDateTime createdAt;
 }

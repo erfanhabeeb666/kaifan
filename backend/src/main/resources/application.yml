@@ -37,8 +37,8 @@ app:
     refresh-expiration-ms: 604800000
 
   exotel:
-    api-key: ${EXOTEL_API_KEY:9880056158a814891fbf46c0ace64067062558ee78dd9695}
-    api-token: ${EXOTEL_API_TOKEN:a181d1f354a8683d06e591e917227c6975a8e9d898cc386a}
+    api-key: ${EXOTEL_API_KEY:2e5c8c78e7652c5ead6d30ead8a54452d8941a0d715c7cae}
+    api-token: ${EXOTEL_API_TOKEN:45db3f086ce33472bfb130743dd8393dda6f49964375c3c7}
     subdomain: ${EXOTEL_SUBDOMAIN:api.exotel.com}
     account-sid: ${EXOTEL_ACCOUNT_SID:kaifankuzhimandhi1}
     caller-id: ${EXOTEL_CALLER_ID:+911234567890}

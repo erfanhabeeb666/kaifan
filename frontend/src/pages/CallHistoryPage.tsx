@@ -34,12 +34,12 @@ import type { CallStatus } from '../types';
 import toast from 'react-hot-toast';
 
 const callStatusColors: Record<CallStatus, { bg: string; text: string }> = {
-  INCOMING: { bg: 'rgba(59, 130, 246, 0.1)', text: '#3B82F6' },
-  QUEUED: { bg: 'rgba(245, 158, 11, 0.1)', text: '#F59E0B' },
-  CONNECTED: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10B981' },
-  COMPLETED: { bg: 'rgba(108, 99, 255, 0.1)', text: '#6C63FF' },
-  MISSED: { bg: 'rgba(239, 68, 68, 0.1)', text: '#EF4444' },
-  ABANDONED: { bg: 'rgba(100, 116, 139, 0.1)', text: '#64748B' },
+  INCOMING: { bg: 'rgba(59, 130, 246, 0.08)', text: '#3B82F6' },
+  QUEUED: { bg: 'rgba(245, 158, 11, 0.08)', text: '#D97706' },
+  CONNECTED: { bg: 'rgba(34, 197, 94, 0.08)', text: '#16A34A' },
+  COMPLETED: { bg: 'rgba(14, 165, 233, 0.08)', text: '#0284C7' },
+  MISSED: { bg: 'rgba(239, 68, 68, 0.08)', text: '#DC2626' },
+  ABANDONED: { bg: 'rgba(148, 163, 184, 0.08)', text: '#64748B' },
 };
 
 export default function CallHistoryPage() {
@@ -111,15 +111,15 @@ export default function CallHistoryPage() {
 
   return (
     <Box className="animate-fade-in">
-      <Typography variant="h4" sx={{ mb: 1 }}>Call History</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+      <Typography variant="h4" sx={{ mb: 0.5, fontSize: { xs: '1.4rem', sm: '1.6rem', md: '1.75rem' } }}>Call History</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: { xs: 2, md: 3 } }}>
         View and filter all incoming calls
       </Typography>
 
       {/* Filters */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Grid container spacing={2} alignItems="center">
+      <Card sx={{ mb: 2.5 }}>
+        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+          <Grid container spacing={1.5} alignItems="center">
             <Grid item xs={12} sm={4}>
               <TextField
                 id="filter-phone"
@@ -128,7 +128,6 @@ export default function CallHistoryPage() {
                 label="Phone Number"
                 value={callerNumber}
                 onChange={(e) => { setCallerNumber(e.target.value); setPage(0); }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
               />
             </Grid>
             <Grid item xs={12} sm={4}>
@@ -140,7 +139,6 @@ export default function CallHistoryPage() {
                 label="Status"
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
               >
                 <MenuItem value="">All</MenuItem>
                 <MenuItem value="INCOMING">Incoming</MenuItem>
@@ -161,12 +159,12 @@ export default function CallHistoryPage() {
           {isLoading ? (
             <Box sx={{ p: 3 }}>
               {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} height={50} sx={{ mb: 1, borderRadius: 2 }} />
+                <Skeleton key={i} height={48} sx={{ mb: 0.5, borderRadius: 1 }} />
               ))}
             </Box>
           ) : (
             <>
-              <TableContainer>
+              <TableContainer sx={{ overflowX: 'auto' }}>
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -177,6 +175,7 @@ export default function CallHistoryPage() {
                       <TableCell>Start Time</TableCell>
                       <TableCell>End Time</TableCell>
                       <TableCell>Duration</TableCell>
+                      <TableCell>Recording</TableCell>
                       <TableCell align="right">Actions</TableCell>
                     </TableRow>
                   </TableHead>
@@ -185,7 +184,7 @@ export default function CallHistoryPage() {
                       const colors = callStatusColors[call.status];
                       return (
                         <TableRow key={call.id} hover>
-                          <TableCell sx={{ fontWeight: 600 }}>
+                          <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                               <Typography fontWeight={600} variant="body2">{call.callerNumber}</Typography>
                               <IconButton
@@ -214,7 +213,7 @@ export default function CallHistoryPage() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
+                            <Typography variant="caption" sx={{ fontFamily: 'monospace', fontSize: '0.72rem' }}>
                               {call.callSid}
                             </Typography>
                           </TableCell>
@@ -229,17 +228,32 @@ export default function CallHistoryPage() {
                               }}
                             />
                           </TableCell>
-                          <TableCell>{call.employeeName || '—'}</TableCell>
                           <TableCell>
-                            {dayjs(call.startTime).format('MMM D, HH:mm:ss')}
+                            <Typography variant="body2">{call.employeeName || '—'}</Typography>
                           </TableCell>
                           <TableCell>
-                            {call.endTime ? dayjs(call.endTime).format('MMM D, HH:mm:ss') : '—'}
+                            <Typography variant="body2">{dayjs(call.startTime).format('MMM D, HH:mm:ss')}</Typography>
                           </TableCell>
                           <TableCell>
-                            {call.durationSeconds
-                              ? `${Math.floor(call.durationSeconds / 60)}m ${call.durationSeconds % 60}s`
-                              : '—'}
+                            <Typography variant="body2">{call.endTime ? dayjs(call.endTime).format('MMM D, HH:mm:ss') : '—'}</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {call.durationSeconds
+                                ? `${Math.floor(call.durationSeconds / 60)}m ${call.durationSeconds % 60}s`
+                                : '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            {call.recordingUrl ? (
+                              <audio
+                                controls
+                                src={call.recordingUrl}
+                                style={{ height: '30px', width: '180px' }}
+                              />
+                            ) : (
+                              <Typography variant="caption" color="text.secondary">—</Typography>
+                            )}
                           </TableCell>
                           <TableCell align="right">
                             {(call.status === 'MISSED' || call.status === 'ABANDONED') && (
@@ -260,8 +274,8 @@ export default function CallHistoryPage() {
                     })}
                     {data?.content?.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
-                          <Typography color="text.secondary">No call records found</Typography>
+                        <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                          <Typography variant="body2" color="text.secondary">No call records found</Typography>
                         </TableCell>
                       </TableRow>
                     )}
@@ -286,7 +300,7 @@ export default function CallHistoryPage() {
       </Card>
 
       {/* Edit/Add Customer Name Dialog */}
-      <Dialog open={openNameDialog} onClose={() => setOpenNameDialog(false)}>
+      <Dialog open={openNameDialog} onClose={() => setOpenNameDialog(false)} fullWidth maxWidth="xs">
         <DialogTitle>Save Customer Name</DialogTitle>
         <DialogContent sx={{ pt: 1, minWidth: 320 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
