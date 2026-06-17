@@ -77,22 +77,13 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
                 .build();
         callLogRepository.save(callLog);
 
-        // Find longest-idle available employee
-        List<Employee> availableEmployees = employeeRepository.findAvailableEmployeesOrderByIdleSince();
+        // Queue the caller
+        queueService.addToQueue(callSid, phoneNumber);
+        callLog.setStatus(CallStatus.QUEUED);
+        callLogRepository.save(callLog);
 
-        if (!availableEmployees.isEmpty()) {
-            // Connect to longest-idle employee
-            Employee employee = availableEmployees.get(0);
-            connectCallToEmployee(callLog, employee);
-        } else {
-            // Queue the caller
-            queueService.addToQueue(callSid, phoneNumber);
-            callLog.setStatus(CallStatus.QUEUED);
-            callLogRepository.save(callLog);
-
-            auditService.log("SYSTEM", "CALL_QUEUED",
-                    "Call " + callSid + " from " + phoneNumber + " added to queue");
-        }
+        auditService.log("SYSTEM", "CALL_QUEUED",
+                "Call " + callSid + " from " + phoneNumber + " added to queue");
 
         eventPublisher.publishNewCall(callLog);
     }
@@ -107,9 +98,30 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
             callLog.setAnswerTime(LocalDateTime.now());
             callLogRepository.save(callLog);
 
+            if (callLog.getEmployee() != null) {
+                Employee employee = callLog.getEmployee();
+                employee.setStatus(EmployeeStatus.BUSY);
+                employee.setLastIdleSince(null);
+                employeeRepository.save(employee);
+                eventPublisher.publishEmployeeStatusChanged(employee);
+            }
+
             eventPublisher.publishCallConnected(callLog);
             auditService.log("SYSTEM", "CALL_CONNECTED",
                     "Call " + callSid + " connected");
+        });
+
+        // Update queue entry if it exists
+        queueEntryRepository.findFirstByCallSidOrderByIdDesc(callSid).ifPresent(queueEntry -> {
+            if (queueEntry.getStatus() == QueueStatus.WAITING) {
+                queueEntry.setStatus(QueueStatus.CONNECTED);
+                queueEntry.setConnectedAt(LocalDateTime.now());
+                long waitTime = Duration.between(queueEntry.getQueuedAt(), LocalDateTime.now()).getSeconds();
+                queueEntry.setWaitTimeSeconds((int) waitTime);
+                queueEntryRepository.save(queueEntry);
+                queueService.repositionQueue();
+                eventPublisher.publishQueueUpdated();
+            }
         });
     }
 
@@ -214,36 +226,8 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
     @Override
     @Transactional
     public void connectNextQueuedCaller() {
-        queueEntryRepository.findOldestWaitingEntry().ifPresent(queueEntry -> {
-            List<Employee> availableEmployees = employeeRepository.findAvailableEmployeesOrderByIdleSince();
-            if (!availableEmployees.isEmpty()) {
-                Employee employee = availableEmployees.get(0);
-
-                // Update queue entry
-                queueEntry.setStatus(QueueStatus.CONNECTED);
-                queueEntry.setConnectedAt(LocalDateTime.now());
-                long waitTime = Duration.between(queueEntry.getQueuedAt(), LocalDateTime.now()).getSeconds();
-                queueEntry.setWaitTimeSeconds((int) waitTime);
-                queueEntryRepository.save(queueEntry);
-
-                // Create/update call log for the queued caller
-                CallLog queuedCallLog = callLogRepository.findFirstByCallSidOrderByIdDesc(queueEntry.getCallSid())
-                        .orElse(CallLog.builder()
-                                .callSid(queueEntry.getCallSid())
-                                .callerNumber(queueEntry.getCallerNumber())
-                                .startTime(queueEntry.getQueuedAt())
-                                .build());
-
-                connectCallToEmployee(queuedCallLog, employee);
-
-                // Reposition remaining queue entries
-                queueService.repositionQueue();
-
-                eventPublisher.publishQueueUpdated();
-                auditService.log("SYSTEM", "QUEUE_DEQUEUED",
-                        "Caller " + queueEntry.getCallerNumber() + " dequeued and connected to " + employee.getName());
-            }
-        });
+        // Exotel drives the actual routing, so we don't simulate connecting callers locally.
+        // This method can remain empty or handle other local side-effects if necessary.
     }
 
     @Override
@@ -254,12 +238,12 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
 
         // Try to find the employee being dialled by phone number
         // Exotel may send the number with or without country code prefix
-        com.kaifan.callqueue.dto.response.AgentDiallingResponse.AgentDiallingResponseBuilder responseBuilder =
-                com.kaifan.callqueue.dto.response.AgentDiallingResponse.builder()
-                        .callSid(callSid)
-                        .dialWhomNumber(dialWhomNumber)
-                        .callerNumber(callerNumber)
-                        .status(status);
+        com.kaifan.callqueue.dto.response.AgentDiallingResponse.AgentDiallingResponseBuilder responseBuilder = com.kaifan.callqueue.dto.response.AgentDiallingResponse
+                .builder()
+                .callSid(callSid)
+                .dialWhomNumber(dialWhomNumber)
+                .callerNumber(callerNumber)
+                .status(status);
 
         // Look up by exact match first, then try stripped variants
         Employee employee = employeeRepository.findByPhoneNumber(dialWhomNumber).orElse(null);
@@ -273,10 +257,11 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
                 stripped = stripped.substring(1);
             }
             // Try common formats
-            for (String prefix : new String[]{"", "+91", "91", "0"}) {
+            for (String prefix : new String[] { "", "+91", "91", "0" }) {
                 String candidate = prefix + stripped;
                 employee = employeeRepository.findByPhoneNumber(candidate).orElse(null);
-                if (employee != null) break;
+                if (employee != null)
+                    break;
             }
         }
 
@@ -284,6 +269,12 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
             responseBuilder.agentName(employee.getName());
             responseBuilder.agentId(employee.getId());
             log.info("Agent identified: {} (id={})", employee.getName(), employee.getId());
+
+            final Employee finalEmployee = employee;
+            callLogRepository.findFirstByCallSidOrderByIdDesc(callSid).ifPresent(callLog -> {
+                callLog.setEmployee(finalEmployee);
+                callLogRepository.save(callLog);
+            });
         } else {
             log.warn("Could not find employee for dialWhomNumber={}", dialWhomNumber);
         }
@@ -309,14 +300,16 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
             map.add("CallerId", callerId);
             map.add("CallType", "trans");
 
-            org.springframework.http.HttpEntity<org.springframework.util.MultiValueMap<String, String>> requestEntity =
-                    new org.springframework.http.HttpEntity<>(map, headers);
+            org.springframework.http.HttpEntity<org.springframework.util.MultiValueMap<String, String>> requestEntity = new org.springframework.http.HttpEntity<>(
+                    map, headers);
 
             String url = String.format("https://%s/v1/Accounts/%s/Calls/connect.json", subdomain, accountSid);
 
-            log.info("Sending outbound callback request to Exotel: url={}, From={}, To={}, CallerId={}", url, fromNumber, toNumber, callerId);
+            log.info("Sending outbound callback request to Exotel: url={}, From={}, To={}, CallerId={}", url,
+                    fromNumber, toNumber, callerId);
 
-            org.springframework.http.ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
+            org.springframework.http.ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity,
+                    String.class);
 
             log.info("Exotel outbound call response: status={}, body={}", response.getStatusCode(), response.getBody());
         } catch (Exception e) {

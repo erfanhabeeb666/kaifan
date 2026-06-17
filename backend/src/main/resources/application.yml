@@ -45,11 +45,15 @@ app:
 
   petpooja:
     enabled: ${PETPOOJA_ENABLED:false}
-    base-url: ${PETPOOJA_BASE_URL:https://api.petpooja.com}
+    base-url: ${PETPOOJA_BASE_URL:https://developerapi.petpooja.com}
     app-key: ${PETPOOJA_APP_KEY:}
     app-secret: ${PETPOOJA_APP_SECRET:}
     access-token: ${PETPOOJA_ACCESS_TOKEN:}
     restaurant-id: ${PETPOOJA_RESTAURANT_ID:}
+    endpoints:
+      fetch-menu: ${PETPOOJA_FETCH_MENU_PATH:/thirdpartyint/4/get_menu}
+      save-order: ${PETPOOJA_SAVE_ORDER_PATH:/thirdpartyint/4/save_order}
+    menu-sync-interval-minutes: ${PETPOOJA_MENU_SYNC_INTERVAL:30}
 
 springdoc:
   api-docs:

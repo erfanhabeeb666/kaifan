@@ -19,6 +19,9 @@ import type {
   UpdateCustomerNameRequest,
   PetpoojaOrderResponse,
   CustomerDetailResponse,
+  MenuResponseDto,
+  CallCenterOrderResponse,
+  CreateOrderRequest,
 } from '../types';
 
 // Auth
@@ -118,3 +121,17 @@ export const syncPetpoojaOrders = (phone: string) =>
 
 export const getCustomerDetail = (phone: string) =>
   api.get<ApiResponse<CustomerDetailResponse>>('/api/petpooja/customer-detail', { params: { phone } });
+
+// Menu & Local Orders
+export const getMenu = () =>
+  api.get<ApiResponse<MenuResponseDto>>('/api/menu');
+
+export const syncMenu = () =>
+  api.post<ApiResponse<string>>('/api/menu/sync');
+
+export const createCallCenterOrder = (data: CreateOrderRequest) =>
+  api.post<ApiResponse<CallCenterOrderResponse>>('/api/orders', data);
+
+export const getCallCenterOrders = (params?: { page?: number; size?: number }) =>
+  api.get<ApiResponse<PageResponse<CallCenterOrderResponse>>>('/api/orders', { params });
+

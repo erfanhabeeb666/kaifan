@@ -39,10 +39,13 @@ import {
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCustomerDetail, syncPetpoojaOrders, createCustomer } from '../api/endpoints';
-import type { CustomerDetailResponse, CallLogResponse } from '../types';
+import type { CustomerDetailResponse, CallLogResponse, CallCenterOrderResponse } from '../types';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import toast from 'react-hot-toast';
+import { NewOrderDrawer } from './NewOrderDrawer';
+import { OrderSuccessDialog } from './OrderSuccessDialog';
+import { Add as AddIcon } from '@mui/icons-material';
 
 dayjs.extend(relativeTime);
 
@@ -73,6 +76,9 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
   const phone = activeCall?.callerNumber || '';
   const [editingAddress, setEditingAddress] = useState(false);
   const [addressInput, setAddressInput] = useState('');
+  const [newOrderDrawerOpen, setNewOrderDrawerOpen] = useState(false);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [placedOrder, setPlacedOrder] = useState<CallCenterOrderResponse | null>(null);
 
   const { data: customerDetail, isLoading } = useQuery({
     queryKey: ['customerDetail', phone],
@@ -168,9 +174,26 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
             </Typography>
           </Box>
         </Box>
-        <IconButton onClick={onClose} sx={{ color: 'rgba(255,255,255,0.7)' }} size="small">
-          <CloseIcon />
-        </IconButton>
+        <Box display="flex" alignItems="center" gap={1}>
+          <Button
+            variant="contained"
+            color="secondary"
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={() => setNewOrderDrawerOpen(true)}
+            sx={{
+              fontWeight: 'bold',
+              textTransform: 'none',
+              borderRadius: '8px',
+              px: 2,
+            }}
+          >
+            New Order
+          </Button>
+          <IconButton onClick={onClose} sx={{ color: 'rgba(255,255,255,0.7)' }} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
       </Box>
 
       <DialogContent sx={{ p: 0 }}>
@@ -474,6 +497,25 @@ export default function CallPopup({ open, onClose, activeCall }: CallPopupProps)
           </Box>
         )}
       </DialogContent>
+
+      <NewOrderDrawer
+        open={newOrderDrawerOpen}
+        onClose={() => setNewOrderDrawerOpen(false)}
+        customerPhone={phone}
+        initialCustomerName={activeCall?.customerName || d?.name || ''}
+        initialAddress={d?.deliveryAddress || ''}
+        onSuccess={(order) => {
+          setPlacedOrder(order);
+          setSuccessDialogOpen(true);
+          queryClient.invalidateQueries({ queryKey: ['customerDetail', phone] });
+        }}
+      />
+
+      <OrderSuccessDialog
+        open={successDialogOpen}
+        onClose={() => setSuccessDialogOpen(false)}
+        order={placedOrder}
+      />
     </Dialog>
   );
 }

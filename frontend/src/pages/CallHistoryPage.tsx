@@ -26,12 +26,14 @@ import {
   DialogActions,
   Button,
 } from '@mui/material';
-import { PhoneCallback as PhoneCallbackIcon, Edit as EditIcon } from '@mui/icons-material';
+import { PhoneCallback as PhoneCallbackIcon, Edit as EditIcon, ShoppingCart as CartIcon } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCallHistory, initiateCallback, createCustomer } from '../api/endpoints';
 import dayjs from 'dayjs';
-import type { CallStatus } from '../types';
+import type { CallStatus, CallCenterOrderResponse } from '../types';
 import toast from 'react-hot-toast';
+import { NewOrderDrawer } from '../components/NewOrderDrawer';
+import { OrderSuccessDialog } from '../components/OrderSuccessDialog';
 
 const callStatusColors: Record<CallStatus, { bg: string; text: string }> = {
   INCOMING: { bg: 'rgba(59, 130, 246, 0.08)', text: '#3B82F6' },
@@ -54,6 +56,18 @@ export default function CallHistoryPage() {
   const [openNameDialog, setOpenNameDialog] = useState(false);
   const [selectedPhone, setSelectedPhone] = useState('');
   const [customerNameInput, setCustomerNameInput] = useState('');
+
+  const [newOrderDrawerOpen, setNewOrderDrawerOpen] = useState(false);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [placedOrder, setPlacedOrder] = useState<CallCenterOrderResponse | null>(null);
+  const [activeOrderPhone, setActiveOrderPhone] = useState('');
+  const [activeOrderName, setActiveOrderName] = useState('');
+
+  const handleOpenOrderDrawer = (phone: string, name?: string | null) => {
+    setActiveOrderPhone(phone);
+    setActiveOrderName(name || '');
+    setNewOrderDrawerOpen(true);
+  };
 
   const saveCustomerMutation = useMutation({
     mutationFn: createCustomer,
@@ -165,15 +179,12 @@ export default function CallHistoryPage() {
           ) : (
             <>
               <TableContainer sx={{ overflowX: 'auto' }}>
-                <Table>
+                <Table sx={{ minWidth: 800 }}>
                   <TableHead>
                     <TableRow>
                       <TableCell>Phone Number</TableCell>
-                      <TableCell>Call SID</TableCell>
                       <TableCell>Status</TableCell>
                       <TableCell>Employee</TableCell>
-                      <TableCell>Start Time</TableCell>
-                      <TableCell>End Time</TableCell>
                       <TableCell>Duration</TableCell>
                       <TableCell>Recording</TableCell>
                       <TableCell align="right">Actions</TableCell>
@@ -213,11 +224,6 @@ export default function CallHistoryPage() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Typography variant="caption" sx={{ fontFamily: 'monospace', fontSize: '0.72rem' }}>
-                              {call.callSid}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
                             <Chip
                               label={call.status}
                               size="small"
@@ -230,12 +236,6 @@ export default function CallHistoryPage() {
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2">{call.employeeName || '—'}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">{dayjs(call.startTime).format('MMM D, HH:mm:ss')}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">{call.endTime ? dayjs(call.endTime).format('MMM D, HH:mm:ss') : '—'}</Typography>
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2">
@@ -256,25 +256,36 @@ export default function CallHistoryPage() {
                             )}
                           </TableCell>
                           <TableCell align="right">
-                            {(call.status === 'MISSED' || call.status === 'ABANDONED') && (
-                              <Tooltip title="Call Back">
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
+                              <Tooltip title="Create New Order">
                                 <IconButton
                                   size="small"
-                                  color="success"
-                                  onClick={() => handleCallback(call.id)}
-                                  disabled={callbackMutation.isPending}
+                                  color="primary"
+                                  onClick={() => handleOpenOrderDrawer(call.callerNumber, call.customerName)}
                                 >
-                                  <PhoneCallbackIcon fontSize="small" />
+                                  <CartIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
-                            )}
+                              {(call.status === 'MISSED' || call.status === 'ABANDONED') && (
+                                <Tooltip title="Call Back">
+                                  <IconButton
+                                    size="small"
+                                    color="success"
+                                    onClick={() => handleCallback(call.id)}
+                                    disabled={callbackMutation.isPending}
+                                  >
+                                    <PhoneCallbackIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                            </Box>
                           </TableCell>
                         </TableRow>
                       );
                     })}
                     {data?.content?.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                        <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                           <Typography variant="body2" color="text.secondary">No call records found</Typography>
                         </TableCell>
                       </TableRow>
@@ -328,6 +339,23 @@ export default function CallHistoryPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <NewOrderDrawer
+        open={newOrderDrawerOpen}
+        onClose={() => setNewOrderDrawerOpen(false)}
+        customerPhone={activeOrderPhone}
+        initialCustomerName={activeOrderName}
+        onSuccess={(order) => {
+          setPlacedOrder(order);
+          setSuccessDialogOpen(true);
+        }}
+      />
+
+      <OrderSuccessDialog
+        open={successDialogOpen}
+        onClose={() => setSuccessDialogOpen(false)}
+        order={placedOrder}
+      />
     </Box>
   );
 }

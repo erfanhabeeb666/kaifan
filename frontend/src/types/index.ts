@@ -180,3 +180,134 @@ export interface CustomerDetailResponse {
   totalSpent: number;
   recentOrders: PetpoojaOrderResponse[];
 }
+
+export interface MenuItemDto {
+  id: number;
+  itemId: string;
+  itemName: string;
+  itemDescription: string | null;
+  price: number;
+  categoryId: string;
+  itemTax: number;
+  taxType: number;
+  itemType: string;
+  inStock: boolean;
+  variationGroupName: string | null;
+  itemImageUrl: string | null;
+  itemAllowAddon: number;
+}
+
+export interface MenuCategoryDto {
+  id: number;
+  categoryId: string;
+  categoryName: string;
+  rank: number;
+  parentCategoryId: string | null;
+}
+
+export interface VariationDto {
+  id: number;
+  variationId: string;
+  variationName: string;
+  variationGroupName: string | null;
+  itemId: string;
+  price: number;
+  inStock: boolean;
+}
+
+export interface AddonGroupDto {
+  id: number;
+  addonGroupId: string;
+  addonGroupName: string;
+  rank: number;
+  minQuantity: number;
+  maxQuantity: number;
+}
+
+export interface AddonItemDto {
+  id: number;
+  addonItemId: string;
+  addonItemName: string;
+  addonGroupId: string;
+  price: number;
+  inStock: boolean;
+}
+
+export interface ItemAddonMappingDto {
+  itemId: string;
+  addonGroupId: string;
+}
+
+export interface MenuResponseDto {
+  categories: MenuCategoryDto[];
+  items: MenuItemDto[];
+  variations: VariationDto[];
+  addonGroups: AddonGroupDto[];
+  addonItems: AddonItemDto[];
+  itemAddonMappings: ItemAddonMappingDto[];
+  lastSyncedAt: string | null;
+}
+
+export interface OrderItemRequest {
+  petpoojaItemId: string;
+  itemName: string;
+  quantity: number;
+  price: number;
+  variationId?: string;
+  variationName?: string;
+  variationPrice?: number;
+  addons?: Array<{ addonId: string; addonName: string; price: number }>;
+  itemNotes?: string;
+}
+
+export interface CreateOrderRequest {
+  customerPhone: string;
+  customerName?: string;
+  deliveryAddress?: string;
+  orderType: string;
+  paymentType: string;
+  items: OrderItemRequest[];
+  packingCharges?: number;
+  deliveryCharges?: number;
+  discountAmount?: number;
+  preorderDate?: string;
+  preorderTime?: string;
+  notes?: string;
+}
+
+export interface CallCenterOrderItemResponse {
+  id: number;
+  petpoojaItemId: string;
+  itemName: string;
+  quantity: number;
+  price: number;
+  finalPrice: number;
+  variationId: string | null;
+  variationName: string | null;
+  addonsJson: string | null;
+  taxAmount: number;
+  itemNotes: string | null;
+}
+
+export interface CallCenterOrderResponse {
+  id: number;
+  orderId: string;
+  petpoojaOrderId: string | null;
+  customerPhone: string;
+  customerName: string | null;
+  deliveryAddress: string | null;
+  orderType: string;
+  paymentType: string;
+  orderStatus: string;
+  subtotal: number;
+  packingCharges: number;
+  deliveryCharges: number;
+  discountAmount: number;
+  taxAmount: number;
+  totalAmount: number;
+  notes: string | null;
+  createdBy: string | null;
+  items: CallCenterOrderItemResponse[];
+  createdAt: string;
+}
+

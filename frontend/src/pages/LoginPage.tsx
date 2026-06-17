@@ -121,7 +121,7 @@ export default function LoginPage() {
           animation: 'fadeIn 0.5s ease-out',
         }}
       >
-        <CardContent sx={{ p: 4.5 }}>
+        <CardContent sx={{ p: { xs: 3, sm: 4.5 } }}>
           {/* Logo */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Box
