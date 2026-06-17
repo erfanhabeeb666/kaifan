@@ -63,6 +63,18 @@ export const useWebSocket = () => {
               fontWeight: 600,
             },
           });
+          
+          const myEmpId = useAuthStore.getState().employeeId;
+          if (myEmpId && agentData.agentId === myEmpId) {
+            // It's ringing for this employee, fetch their active call so the popup opens immediately
+            import('../api/endpoints').then(({ getActiveCallForEmployee }) => {
+              getActiveCallForEmployee(myEmpId).then((res) => {
+                if (res.data.data) {
+                  updateActiveCall(res.data.data);
+                }
+              }).catch(console.error);
+            });
+          }
           break;
         }
       }

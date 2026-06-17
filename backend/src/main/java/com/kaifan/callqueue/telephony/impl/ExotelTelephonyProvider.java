@@ -234,7 +234,7 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public void handleAgentDialling(String callSid, String dialWhomNumber, String callerNumber, String status) {
         log.info("Agent dialling event: callSid={}, dialWhomNumber={}, caller={}, status={}",
                 callSid, dialWhomNumber, callerNumber, status);

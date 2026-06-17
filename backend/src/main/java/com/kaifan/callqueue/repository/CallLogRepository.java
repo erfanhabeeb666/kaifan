@@ -20,11 +20,11 @@ public interface CallLogRepository extends JpaRepository<CallLog, Long> {
 
     List<CallLog> findByStatus(CallStatus status);
 
-    @Query("SELECT c FROM CallLog c WHERE c.status = 'CONNECTED' ORDER BY c.id DESC")
+    @Query("SELECT c FROM CallLog c WHERE c.status IN ('INCOMING', 'QUEUED', 'CONNECTED') ORDER BY c.id DESC")
     List<CallLog> findActiveCalls();
 
-    @Query("SELECT c FROM CallLog c WHERE c.employee.id = :employeeId AND c.status = 'CONNECTED'")
-    Optional<CallLog> findActiveCallByEmployeeId(@Param("employeeId") Long employeeId);
+    @Query("SELECT c FROM CallLog c WHERE c.employee.id = :employeeId AND c.status IN ('INCOMING', 'QUEUED', 'CONNECTED') ORDER BY c.id DESC")
+    List<CallLog> findActiveCallByEmployeeId(@Param("employeeId") Long employeeId);
 
     // Analytics queries
     @Query("SELECT COUNT(c) FROM CallLog c WHERE c.startTime >= :start")

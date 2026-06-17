@@ -64,6 +64,9 @@ export const deactivateEmployee = (id: number) =>
 export const getActiveCalls = () =>
   api.get<ApiResponse<CallLogResponse[]>>('/api/calls/active');
 
+export const getActiveCallForEmployee = (employeeId: number) =>
+  api.get<ApiResponse<CallLogResponse>>(`/api/calls/employee/${employeeId}/active`);
+
 export const getCallHistory = (params: {
   callerNumber?: string;
   status?: CallStatus;

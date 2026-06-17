@@ -50,9 +50,8 @@ public class CallLogServiceImpl implements CallLogService {
     @Override
     @Transactional(readOnly = true)
     public CallLogResponse getActiveCallForEmployee(Long employeeId) {
-        return callLogRepository.findActiveCallByEmployeeId(employeeId)
-                .map(entityMapper::toCallLogResponse)
-                .orElse(null);
+        List<CallLog> calls = callLogRepository.findActiveCallByEmployeeId(employeeId);
+        return calls.isEmpty() ? null : entityMapper.toCallLogResponse(calls.get(0));
     }
 
     @Override

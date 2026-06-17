@@ -44,6 +44,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getDashboard, createCustomer, getPetpoojaOrders } from '../api/endpoints';
 import { useDashboardStore } from '../stores/dashboardStore';
+import { useAuthStore } from '../stores/authStore';
 import CallPopup from '../components/CallPopup';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -144,6 +145,7 @@ export default function DashboardPage() {
   const [customerNameInput, setCustomerNameInput] = useState('');
   const [callPopupOpen, setCallPopupOpen] = useState(false);
   const [callPopupCall, setCallPopupCall] = useState<CallLogResponse | null>(null);
+  const { employeeId } = useAuthStore();
   const [ordersPage, setOrdersPage] = useState(1);
 
   const saveCustomerMutation = useMutation({
@@ -197,13 +199,18 @@ export default function DashboardPage() {
     }
   }, [data, setDashboard]);
 
-  // Auto-open call popup when a call gets connected
+  // Auto-open call popup when a call gets connected or assigned to the current employee
   useEffect(() => {
-    if (dashboard?.activeCall && dashboard.activeCall.status === 'CONNECTED') {
-      setCallPopupCall(dashboard.activeCall);
-      setCallPopupOpen(true);
+    if (dashboard?.activeCall) {
+      const isAssignedToMe = employeeId != null && dashboard.activeCall.employeeId === employeeId;
+      const isConnected = dashboard.activeCall.status === 'CONNECTED';
+      
+      if (isConnected || isAssignedToMe) {
+        setCallPopupCall(dashboard.activeCall);
+        setCallPopupOpen(true);
+      }
     }
-  }, [dashboard?.activeCall?.callSid, dashboard?.activeCall?.status]);
+  }, [dashboard?.activeCall?.callSid, dashboard?.activeCall?.status, dashboard?.activeCall?.employeeId, employeeId]);
 
   const d = dashboard;
 

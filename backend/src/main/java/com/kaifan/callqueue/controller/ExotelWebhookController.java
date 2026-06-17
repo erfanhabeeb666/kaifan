@@ -104,7 +104,7 @@ public class ExotelWebhookController {
         return ResponseEntity.ok(ApiResponse.success("Call completed processed"));
     }
 
-    @PostMapping(value = "/agent-dialling", consumes = "application/json")
+    @PostMapping(value = {"/agent-dialling", "/agent-dialing"}, consumes = "application/json")
     @Operation(summary = "Handle currently active agent popup webhook from Exotel (JSON)")
     public ResponseEntity<ApiResponse<String>> handleAgentDiallingJson(@RequestBody ExotelWebhookRequest request) {
         log.info("Exotel agent dialling JSON webhook: CallSid={}, DialWhomNumber={}, From={}, Status={}",
@@ -114,7 +114,7 @@ public class ExotelWebhookController {
         return ResponseEntity.ok(ApiResponse.success("Agent dialling processed"));
     }
 
-    @RequestMapping(value = "/agent-dialling")
+    @RequestMapping(value = {"/agent-dialling", "/agent-dialing"})
     @Operation(summary = "Handle currently active agent popup webhook from Exotel (Form/GET)")
     public ResponseEntity<ApiResponse<String>> handleAgentDiallingForm(
             @RequestParam(value = "CallSid", required = false) String callSid,
