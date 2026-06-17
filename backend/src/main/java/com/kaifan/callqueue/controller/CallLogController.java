@@ -56,4 +56,20 @@ public class CallLogController {
     public ResponseEntity<ApiResponse<CallLogResponse>> initiateCallback(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success("Callback initiated", callLogService.initiateCallback(id)));
     }
+
+    @GetMapping("/{id}/recording")
+    @Operation(summary = "Get recording audio for a call log")
+    public ResponseEntity<byte[]> getCallRecording(@PathVariable Long id) {
+        try {
+            byte[] recording = callLogService.getCallRecording(id);
+            return ResponseEntity.ok()
+                    .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "audio/mpeg")
+                    .header(org.springframework.http.HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+                    .header(org.springframework.http.HttpHeaders.PRAGMA, "no-cache")
+                    .header(org.springframework.http.HttpHeaders.EXPIRES, "0")
+                    .body(recording);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

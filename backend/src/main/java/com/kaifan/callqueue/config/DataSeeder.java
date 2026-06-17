@@ -36,25 +36,46 @@ public class DataSeeder implements CommandLineRunner {
                                         .build();
                         userRepository.save(admin);
 
-                        // Create employee user
-                        User empUser = User.builder()
-                                        .username("employee")
+                        // Create employee 1 user
+                        User empUser1 = User.builder()
+                                        .username("employee1")
                                         .password(passwordEncoder.encode("employee123"))
-                                        .fullName("Employee User")
+                                        .fullName("Employee One")
                                         .role(UserRole.ROLE_EMPLOYEE)
                                         .active(true)
                                         .build();
-                        empUser = userRepository.save(empUser);
+                        empUser1 = userRepository.save(empUser1);
 
-                        // Create employees
+                        // Create employee 2 user
+                        User empUser2 = User.builder()
+                                        .username("employee2")
+                                        .password(passwordEncoder.encode("employee123"))
+                                        .fullName("Employee Two")
+                                        .role(UserRole.ROLE_EMPLOYEE)
+                                        .active(true)
+                                        .build();
+                        empUser2 = userRepository.save(empUser2);
+
+                        // Create employee 1
                         Employee emp1 = Employee.builder()
                                         .name("ERFAN HABEEB")
-                                        .phoneNumber("+919895725347")
+                                        .phoneNumber("+919447963027")
                                         .status(EmployeeStatus.OFFLINE)
                                         .active(true)
-                                        .user(empUser)
+                                        .user(empUser1)
                                         .build();
                         employeeRepository.save(emp1);
+
+                        // Create employee 2
+                        Employee emp2 = Employee.builder()
+                                        .name("EMPLOYEE TWO")
+                                        .phoneNumber("+917012460927")
+                                        .status(EmployeeStatus.OFFLINE)
+                                        .active(true)
+                                        .user(empUser2)
+                                        .build();
+                        employeeRepository.save(emp2);
+
                         log.info("Seed data created successfully");
                 }
         }

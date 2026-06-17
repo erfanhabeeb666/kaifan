@@ -18,5 +18,7 @@ public interface TelephonyProvider {
 
     void handleAgentDialling(String callSid, String dialWhomNumber, String callerNumber, String status);
 
-    void makeOutboundCall(String fromNumber, String toNumber);
+    String makeOutboundCall(String fromNumber, String toNumber, String callbackAppId);
+    
+    byte[] getRecording(String recordingUrl);
 }

@@ -38,6 +38,7 @@ public class CallLogServiceImpl implements CallLogService {
     private final AuditService auditService;
     private final EntityMapper entityMapper;
     private final TelephonyProvider telephonyProvider;
+    private final org.springframework.core.env.Environment env;
 
     @Override
     @Transactional(readOnly = true)
@@ -69,39 +70,47 @@ public class CallLogServiceImpl implements CallLogService {
         CallLog originalCall = callLogRepository.findById(callLogId)
                 .orElseThrow(() -> new ResourceNotFoundException("Call log not found: " + callLogId));
 
-        // Get currently authenticated user/employee
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
-
-        Employee employee = employeeRepository.findByUserId(user.getId())
+        Employee loggedInEmployee = employeeRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalStateException("Only users with associated employee profile can initiate callbacks"));
 
+        // Get the specific App ID for this employee, if configured
+        String specificAppId = env.getProperty("app.exotel.callback-app-id." + loggedInEmployee.getId());
+
         // Trigger the real call via Exotel API
-        telephonyProvider.makeOutboundCall(employee.getPhoneNumber(), originalCall.getCallerNumber());
+        String newCallSid = telephonyProvider.makeOutboundCall(originalCall.getCallerNumber(), "", specificAppId);
 
-        // Update employee status to BUSY
-        employee.setStatus(EmployeeStatus.BUSY);
-        employee.setLastIdleSince(null);
-        employeeRepository.save(employee);
-        eventPublisher.publishEmployeeStatusChanged(employee);
+        if (newCallSid != null && !newCallSid.isBlank()) {
+            originalCall.setCallSid(newCallSid);
+            originalCall.setEmployee(null); // Employee will be assigned automatically by Exotel group
+            originalCall.setAnswerTime(null);
+            originalCall.setEndTime(null);
+            originalCall.setDurationSeconds(null);
+            originalCall.setMissed(false);
+        }
+        
+        originalCall.setStatus(CallStatus.CALLED_BACK);
+        callLogRepository.save(originalCall);
 
-        // Create new CallLog for callback
-        CallLog callbackCall = CallLog.builder()
-                .callSid("CALLBACK_" + System.currentTimeMillis())
-                .callerNumber(originalCall.getCallerNumber())
-                .status(CallStatus.CONNECTED)
-                .startTime(LocalDateTime.now())
-                .answerTime(LocalDateTime.now())
-                .employee(employee)
-                .missed(false)
-                .build();
-        callbackCall = callLogRepository.save(callbackCall);
-
-        eventPublisher.publishCallConnected(callbackCall);
         auditService.log(username, "CALLBACK_INITIATED",
-                "Initiated callback to " + originalCall.getCallerNumber());
+                "Initiated callback to " + originalCall.getCallerNumber() + " (New CallSid: " + newCallSid + ")");
 
-        return entityMapper.toCallLogResponse(callbackCall);
+        return entityMapper.toCallLogResponse(originalCall);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] getCallRecording(Long callLogId) {
+        CallLog callLog = callLogRepository.findById(callLogId)
+                .orElseThrow(() -> new ResourceNotFoundException("Call log not found: " + callLogId));
+                
+        String recordingUrl = callLog.getRecordingUrl();
+        if (recordingUrl == null || recordingUrl.isBlank()) {
+            throw new IllegalStateException("No recording URL available for this call");
+        }
+        
+        return telephonyProvider.getRecording(recordingUrl);
     }
 }

@@ -16,4 +16,6 @@ public interface CallLogService {
                                           Pageable pageable);
 
     CallLogResponse initiateCallback(Long callLogId);
+    
+    byte[] getCallRecording(Long callLogId);
 }

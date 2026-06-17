@@ -41,7 +41,12 @@ app:
     api-token: ${EXOTEL_API_TOKEN:45db3f086ce33472bfb130743dd8393dda6f49964375c3c7}
     subdomain: ${EXOTEL_SUBDOMAIN:api.exotel.com}
     account-sid: ${EXOTEL_ACCOUNT_SID:kaifankuzhimandhi1}
-    caller-id: ${EXOTEL_CALLER_ID:+911234567890}
+    caller-id: ${EXOTEL_CALLER_ID:04954266665}
+    # Specific Callback Flow App IDs for Employees.
+    # Replace '1' and '2' with actual Employee IDs from the DB, and the default values with real Exotel Flow IDs.
+    callback-app-id:
+      1: ${EXOTEL_CALLBACK_APP_ID_1:1271196}
+      2: ${EXOTEL_CALLBACK_APP_ID_2:2222222}
 
   petpooja:
     enabled: ${PETPOOJA_ENABLED:false}

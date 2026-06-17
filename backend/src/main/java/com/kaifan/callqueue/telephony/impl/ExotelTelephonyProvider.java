@@ -45,6 +45,9 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
     @Value("${app.exotel.caller-id}")
     private String callerId;
 
+    @Value("${app.exotel.callback-app-id:}")
+    private String callbackAppId;
+
     private final CallLogRepository callLogRepository;
     private final EmployeeRepository employeeRepository;
     private final QueueEntryRepository queueEntryRepository;
@@ -286,7 +289,7 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
     }
 
     @Override
-    public void makeOutboundCall(String fromNumber, String toNumber) {
+    public String makeOutboundCall(String fromNumber, String toNumber, String dynamicCallbackAppId) {
         try {
             RestTemplate restTemplate = new RestTemplate();
 
@@ -296,8 +299,22 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
 
             org.springframework.util.MultiValueMap<String, String> map = new org.springframework.util.LinkedMultiValueMap<>();
             map.add("From", fromNumber);
-            map.add("To", toNumber);
-            map.add("CallerId", callerId);
+            
+            if (toNumber == null || toNumber.isBlank()) {
+                String targetAppId = (dynamicCallbackAppId != null && !dynamicCallbackAppId.isBlank()) ? dynamicCallbackAppId : callbackAppId;
+                if (targetAppId != null && !targetAppId.isBlank()) {
+                    String appUrl = String.format("http://my.exotel.com/%s/exoml/start_voice/%s", accountSid, targetAppId);
+                    map.add("Url", appUrl);
+                    log.info("Using Url to trigger Exotel App ID: {}", targetAppId);
+                } else {
+                    map.add("To", callerId);
+                }
+            } else {
+                map.add("To", toNumber);
+            }
+            if (callerId != null && !callerId.isBlank() && !callerId.equals("+911234567890")) {
+                map.add("CallerId", callerId);
+            }
             map.add("CallType", "trans");
 
             org.springframework.http.HttpEntity<org.springframework.util.MultiValueMap<String, String>> requestEntity = new org.springframework.http.HttpEntity<>(
@@ -305,16 +322,53 @@ public class ExotelTelephonyProvider implements TelephonyProvider {
 
             String url = String.format("https://%s/v1/Accounts/%s/Calls/connect.json", subdomain, accountSid);
 
-            log.info("Sending outbound callback request to Exotel: url={}, From={}, To={}, CallerId={}", url,
-                    fromNumber, toNumber, callerId);
+            log.info("Sending outbound callback request to Exotel: url={}, From={}, CallerId={}", url,
+                    fromNumber, callerId);
 
             org.springframework.http.ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity,
                     String.class);
 
             log.info("Exotel outbound call response: status={}, body={}", response.getStatusCode(), response.getBody());
+            
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(response.getBody());
+            String newCallSid = root.path("Call").path("Sid").asText();
+            return newCallSid;
         } catch (Exception e) {
             log.error("Failed to make outbound call via Exotel API", e);
             throw new RuntimeException("Exotel outbound call failed: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public byte[] getRecording(String recordingUrl) {
+        if (recordingUrl == null || recordingUrl.isBlank()) {
+            throw new IllegalArgumentException("Recording URL cannot be null or empty");
+        }
+        
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setBasicAuth(apiKey, apiToken);
+            
+            org.springframework.http.HttpEntity<Void> requestEntity = new org.springframework.http.HttpEntity<>(headers);
+            
+            log.info("Fetching recording from URL: {}", recordingUrl);
+            org.springframework.http.ResponseEntity<byte[]> response = restTemplate.exchange(
+                    recordingUrl,
+                    org.springframework.http.HttpMethod.GET,
+                    requestEntity,
+                    byte[].class
+            );
+            
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return response.getBody();
+            } else {
+                throw new RuntimeException("Failed to fetch recording, status code: " + response.getStatusCode());
+            }
+        } catch (Exception e) {
+            log.error("Error fetching recording from Exotel", e);
+            throw new RuntimeException("Error fetching recording: " + e.getMessage(), e);
         }
     }
 }

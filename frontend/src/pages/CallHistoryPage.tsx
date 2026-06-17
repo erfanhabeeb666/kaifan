@@ -44,6 +44,36 @@ const callStatusColors: Record<CallStatus, { bg: string; text: string }> = {
   ABANDONED: { bg: 'rgba(148, 163, 184, 0.08)', text: '#64748B' },
 };
 
+import api from '../api/axios';
+
+const AudioPlayer = ({ callId }: { callId: number }) => {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleLoad = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get(`/api/calls/${callId}/recording`, { responseType: 'blob' });
+      const url = URL.createObjectURL(response.data);
+      setBlobUrl(url);
+    } catch (e) {
+      toast.error('Failed to load recording');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (blobUrl) {
+    return <audio controls src={blobUrl} style={{ height: '30px', width: '180px' }} autoPlay />;
+  }
+
+  return (
+    <Button size="small" onClick={handleLoad} disabled={loading} variant="outlined" sx={{ textTransform: 'none', height: '30px' }}>
+      {loading ? 'Loading...' : 'Load Recording'}
+    </Button>
+  );
+};
+
 export default function CallHistoryPage() {
   const theme = useTheme();
   const [page, setPage] = useState(0);
@@ -246,11 +276,7 @@ export default function CallHistoryPage() {
                           </TableCell>
                           <TableCell>
                             {call.recordingUrl ? (
-                              <audio
-                                controls
-                                src={call.recordingUrl}
-                                style={{ height: '30px', width: '180px' }}
-                              />
+                              <AudioPlayer callId={call.id} />
                             ) : (
                               <Typography variant="caption" color="text.secondary">—</Typography>
                             )}

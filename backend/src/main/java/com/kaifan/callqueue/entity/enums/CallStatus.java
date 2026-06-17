@@ -6,5 +6,6 @@ public enum CallStatus {
     CONNECTED,
     COMPLETED,
     MISSED,
-    ABANDONED
+    ABANDONED,
+    CALLED_BACK
 }
